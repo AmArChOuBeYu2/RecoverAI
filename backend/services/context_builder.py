@@ -33,11 +33,12 @@ class ContextBuilder:
         segment = case.segment
 
         # Calculate transaction age in hours
-        txn_created = txn.created_at if (txn and txn.created_at) else now
+        now_utc = now if now.tzinfo is not None else now.replace(tzinfo=timezone.utc)
+        txn_created = txn.created_at if (txn and txn.created_at) else now_utc
         if txn_created.tzinfo is None:
             txn_created = txn_created.replace(tzinfo=timezone.utc)
-        age_seconds = (now - txn_created).total_seconds()
-        age_hours = max(0.0, round(age_seconds / 3600.0, 2))
+        age_seconds = (now_utc - txn_created).total_seconds()
+        age_hours = max(0.0, age_seconds / 3600.0)
 
         # Retrieve prior recovery actions
         actions = db.query(RecoveryAction).filter_by(recovery_case_id=case.id).all()

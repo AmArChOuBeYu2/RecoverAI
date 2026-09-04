@@ -355,3 +355,114 @@ def test_api_recovery_eligibility_evaluate(db_session: Session):
     data = response.json()
     assert "is_eligible" in data
     assert data["status"] in ("ELIGIBLE", "INELIGIBLE")
+
+# -----------------------------------------------------------------------------
+# 5. Targeted Audit Regression Tests (Milestone 10 Verification)
+# -----------------------------------------------------------------------------
+
+def test_eligibility_age_boundaries(db_session: Session):
+    """Verify exact 72-hour transaction age boundaries: 71h 59m (pass), 72h 00m (pass), 72h 01s (fail)."""
+    now = datetime(2026, 9, 5, 12, 0, 0, tzinfo=timezone.utc)
+    cust = Customer(email="age_bound@example.com", phone="+919876543210", customer_type="NEW")
+    db_session.add(cust)
+    db_session.flush()
+
+    # Case 1: 71h 59m old (259140s) -> Eligible
+    txn_71h59m = Transaction(razorpay_payment_id="pay_71h59m", customer_id=cust.id, amount_paise=100000, status="FAILED", failure_category="AUTHENTICATION_FAILURE", created_at=now - timedelta(hours=71, minutes=59))
+    db_session.add(txn_71h59m)
+    db_session.flush()
+    case_71 = RecoveryCase(transaction_id=txn_71h59m.id, customer_id=cust.id, status=RecoveryCaseStatus.DETECTED.value, attempt_count=0)
+    db_session.add(case_71)
+    db_session.flush()
+    SegmentationService.assign_segment_to_case(db_session, case_71)
+    res_71 = EligibilityChecker.evaluate_eligibility(db_session, case_71, as_of_time=now)
+    assert res_71.is_eligible is True
+    assert res_71.status == RecoveryCaseStatus.ELIGIBLE.value
+
+    # Case 2: Exactly 72h old (259200s) -> Eligible
+    txn_72h = Transaction(razorpay_payment_id="pay_72h", customer_id=cust.id, amount_paise=100000, status="FAILED", failure_category="AUTHENTICATION_FAILURE", created_at=now - timedelta(hours=72))
+    db_session.add(txn_72h)
+    db_session.flush()
+    case_72 = RecoveryCase(transaction_id=txn_72h.id, customer_id=cust.id, status=RecoveryCaseStatus.DETECTED.value, attempt_count=0)
+    db_session.add(case_72)
+    db_session.flush()
+    SegmentationService.assign_segment_to_case(db_session, case_72)
+    res_72 = EligibilityChecker.evaluate_eligibility(db_session, case_72, as_of_time=now)
+    assert res_72.is_eligible is True
+    assert res_72.status == RecoveryCaseStatus.ELIGIBLE.value
+
+    # Case 3: 72h + 1s old (259201s) -> Ineligible
+    txn_72h1s = Transaction(razorpay_payment_id="pay_72h1s", customer_id=cust.id, amount_paise=100000, status="FAILED", failure_category="AUTHENTICATION_FAILURE", created_at=now - timedelta(hours=72, seconds=1))
+    db_session.add(txn_72h1s)
+    db_session.flush()
+    case_72_1s = RecoveryCase(transaction_id=txn_72h1s.id, customer_id=cust.id, status=RecoveryCaseStatus.DETECTED.value, attempt_count=0)
+    db_session.add(case_72_1s)
+    db_session.flush()
+    SegmentationService.assign_segment_to_case(db_session, case_72_1s)
+    res_72_1s = EligibilityChecker.evaluate_eligibility(db_session, case_72_1s, as_of_time=now)
+    assert res_72_1s.is_eligible is False
+    assert res_72_1s.status == RecoveryCaseStatus.INELIGIBLE.value
+
+def test_eligibility_retry_attempts_granularity(db_session: Session):
+    """Verify attempt_count boundaries: 0 (pass), 1 (pass), 2 (fail), 3 (fail)."""
+    now = datetime(2026, 9, 5, 12, 0, 0, tzinfo=timezone.utc)
+    cust = Customer(email="retry_gran@example.com", phone="+919876543210", customer_type="NEW")
+    db_session.add(cust)
+    db_session.flush()
+
+    for attempts, expected_eligible in [(0, True), (1, True), (2, False), (3, False)]:
+        txn = Transaction(razorpay_payment_id=f"pay_retry_{attempts}", customer_id=cust.id, amount_paise=100000, status="FAILED", failure_category="AUTHENTICATION_FAILURE", created_at=now)
+        db_session.add(txn)
+        db_session.flush()
+        case = RecoveryCase(transaction_id=txn.id, customer_id=cust.id, status=RecoveryCaseStatus.DETECTED.value, attempt_count=attempts)
+        db_session.add(case)
+        db_session.flush()
+        SegmentationService.assign_segment_to_case(db_session, case)
+        res = EligibilityChecker.evaluate_eligibility(db_session, case, as_of_time=now)
+        assert res.is_eligible is expected_eligible, f"Failed for attempt_count={attempts}"
+
+def test_detection_engine_idempotency(db_session: Session):
+    """Verify repeated detection scans do not create duplicate cases for the same failed transaction."""
+    cust = Customer(email="idemp_det@example.com", phone="+919876543210", customer_type="NEW")
+    db_session.add(cust)
+    db_session.flush()
+
+    txn = Transaction(razorpay_payment_id="pay_idemp_scan", customer_id=cust.id, amount_paise=100000, status="FAILED", failure_category="AUTHENTICATION_FAILURE")
+    db_session.add(txn)
+    db_session.flush()
+
+    # First detection scan
+    cases_run_1 = DetectionEngine.detect_unhandled_failures(db_session)
+    assert any(c.transaction_id == txn.id for c in cases_run_1)
+
+    # Second detection scan
+    cases_run_2 = DetectionEngine.detect_unhandled_failures(db_session)
+    assert not any(c.transaction_id == txn.id for c in cases_run_2)
+
+    # Database count check
+    total_cases = db_session.query(RecoveryCase).filter_by(transaction_id=txn.id).count()
+    assert total_cases == 1
+
+def test_context_builder_no_ground_truth_leakage(db_session: Session):
+    """Verify ContextBuilder outputs zero hidden simulation ground truth or future outcome fields."""
+    now = datetime(2026, 9, 5, 12, 0, 0, tzinfo=timezone.utc)
+    cust = Customer(email="leak_test@example.com", customer_type="NEW")
+    db_session.add(cust)
+    db_session.flush()
+
+    txn = Transaction(razorpay_payment_id="pay_leak_check", customer_id=cust.id, amount_paise=100000, status="FAILED", failure_category="AUTHENTICATION_FAILURE", created_at=now)
+    db_session.add(txn)
+    db_session.flush()
+
+    case = RecoveryCase(transaction_id=txn.id, customer_id=cust.id, status=RecoveryCaseStatus.DETECTED.value, attempt_count=0)
+    db_session.add(case)
+    db_session.flush()
+    SegmentationService.assign_segment_to_case(db_session, case)
+
+    ctx = ContextBuilder.assemble_case_context(db_session, case, as_of_time=now)
+    ctx_str = str(ctx).lower()
+
+    forbidden_terms = ["simulation_ground_truth", "true_recovery_probability", "simulated_outcome", "future_outcome"]
+    for term in forbidden_terms:
+        assert term not in ctx_str, f"Forbidden leakage term '{term}' found in ContextBuilder output!"
+
