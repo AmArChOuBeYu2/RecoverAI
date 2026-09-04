@@ -11,6 +11,8 @@ from sqlalchemy import text
 
 from backend.database.session import get_db
 
+from backend.config import settings
+
 router = APIRouter(prefix="/api", tags=["health"])
 
 @router.get("/health")
@@ -23,13 +25,13 @@ def health_check(db: Session = Depends(get_db)):
         db_status = f"unhealthy: {str(e)}"
 
     # Razorpay SDK / Test Mode check
-    rzp_key_id = os.environ.get("RAZORPAY_KEY_ID", "")
-    rzp_key_secret = os.environ.get("RAZORPAY_KEY_SECRET", "")
+    rzp_key_id = os.environ.get("RAZORPAY_KEY_ID") or settings.RAZORPAY_KEY_ID
+    rzp_key_secret = os.environ.get("RAZORPAY_KEY_SECRET") or settings.RAZORPAY_KEY_SECRET
     rzp_status = "configured" if (rzp_key_id and rzp_key_secret) else "unconfigured (test simulation mode active)"
 
     # AI LLM Provider check
-    openai_key = os.environ.get("OPENAI_API_KEY", "")
-    gemini_key = os.environ.get("GEMINI_API_KEY", "")
+    openai_key = os.environ.get("OPENAI_API_KEY") or settings.OPENAI_API_KEY
+    gemini_key = os.environ.get("GEMINI_API_KEY") or settings.GEMINI_API_KEY
     llm_status = {
         "openai": "configured" if openai_key else "missing_key",
         "gemini": "configured" if gemini_key else "missing_key",

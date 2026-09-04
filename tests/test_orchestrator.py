@@ -28,6 +28,25 @@ test_engine = create_engine(
 Base.metadata.create_all(bind=test_engine)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
+@pytest.fixture(autouse=True)
+def mock_razorpay_for_orchestrator_tests():
+    """Ensure orchestrator unit tests don't hit external Razorpay API rate limits."""
+    from unittest.mock import patch, MagicMock
+    from backend.integrations.razorpay import RazorpayPaymentLinkResponse
+    with patch("backend.services.executor.RazorpayPaymentLinkService") as mock_cls:
+        mock_inst = MagicMock()
+        mock_inst.create_payment_link.side_effect = lambda req: RazorpayPaymentLinkResponse(
+            id=f"plink_orch_{uuid.uuid4().hex[:8]}",
+            amount=req.amount_paise,
+            currency="INR",
+            status="created",
+            short_url="https://rzp.io/i/orch_test",
+            reference_id=req.reference_id,
+            created_at=int(datetime.now(timezone.utc).timestamp()),
+        )
+        mock_cls.return_value = mock_inst
+        yield mock_inst
+
 @pytest.fixture
 def db_session():
     """Clean in-memory DB session for orchestrator testing."""

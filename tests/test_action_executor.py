@@ -273,15 +273,28 @@ def test_api_execute_endpoint(db_session):
     )
     db_session.commit()
 
-    res = client.post(f"/api/recovery/{case.id}/execute")
-    assert res.status_code == 200, res.text
-    data = res.json()
+    with patch("backend.services.executor.RazorpayPaymentLinkService") as mock_cls:
+        mock_inst = MagicMock()
+        mock_inst.create_payment_link.return_value = RazorpayPaymentLinkResponse(
+            id="plink_test_api_123",
+            amount=case.transaction.amount_paise,
+            currency="INR",
+            status="created",
+            short_url="https://rzp.io/i/testapi",
+            reference_id=f"ref_{case.id[:8]}",
+            created_at=int(datetime.now(timezone.utc).timestamp()),
+        )
+        mock_cls.return_value = mock_inst
 
-    assert data["case_id"] == case.id
-    assert data["case_status"] == RecoveryCaseStatus.AWAITING_VERIFICATION.value
-    assert data["action_type"] == StrategyType.PAYMENT_LINK.value
-    assert data["execution_mode"] in (ActionExecutionMode.REAL_TEST_MODE.value, ActionExecutionMode.SIMULATED.value)
-    assert data["action_id"] is not None
+        res = client.post(f"/api/recovery/{case.id}/execute")
+        assert res.status_code == 200, res.text
+        data = res.json()
+
+        assert data["case_id"] == case.id
+        assert data["case_status"] == RecoveryCaseStatus.AWAITING_VERIFICATION.value
+        assert data["action_type"] == StrategyType.PAYMENT_LINK.value
+        assert data["execution_mode"] in (ActionExecutionMode.REAL_TEST_MODE.value, ActionExecutionMode.SIMULATED.value)
+        assert data["action_id"] is not None
 
 def test_api_execute_endpoint_nonexistent_case():
     """Test POST /api/recovery/nonexistent_id/execute returns 404."""
@@ -361,7 +374,18 @@ def test_concurrent_cap_enforcement(db_session):
 def test_execution_idempotency_repeated_requests(db_session):
     """Test repeated execution of the same case returns the same action without creating duplicate links."""
     case, decision = create_sample_case_with_decision(db_session, strategy_type=StrategyType.PAYMENT_LINK.value)
-    executor = ActionExecutor()
+    
+    mock_service = MagicMock()
+    mock_service.create_payment_link.return_value = RazorpayPaymentLinkResponse(
+        id="plink_idempotency_123",
+        amount=case.transaction.amount_paise,
+        currency="INR",
+        status="created",
+        short_url="https://rzp.io/i/idem123",
+        reference_id=f"ref_{case.id[:8]}",
+        created_at=int(datetime.now(timezone.utc).timestamp()),
+    )
+    executor = ActionExecutor(payment_link_service=mock_service)
 
     action1 = executor.execute(db_session, case, decision)
     db_session.commit()
@@ -372,6 +396,7 @@ def test_execution_idempotency_repeated_requests(db_session):
     assert action1.id == action2.id
     assert action1.razorpay_payment_link_id == action2.razorpay_payment_link_id
     assert db_session.query(RecoveryAction).filter_by(recovery_case_id=case.id).count() == 1
+    assert mock_service.create_payment_link.call_count == 1
 
 def test_external_api_failure_semantics(db_session):
     """Test Razorpay API error logs ACTION_EXECUTION_FAILED and sets status='FAILED' without advancing state machine."""
@@ -423,7 +448,17 @@ def test_idempotency_allows_retry_when_previous_action_failed(db_session):
     db_session.add(failed_act)
     db_session.commit()
 
-    executor = ActionExecutor()
+    mock_service = MagicMock()
+    mock_service.create_payment_link.return_value = RazorpayPaymentLinkResponse(
+        id="plink_retry_456",
+        amount=case.transaction.amount_paise,
+        currency="INR",
+        status="created",
+        short_url="https://rzp.io/i/retry456",
+        reference_id=f"ref_{case.id[:8]}",
+        created_at=int(datetime.now(timezone.utc).timestamp()),
+    )
+    executor = ActionExecutor(payment_link_service=mock_service)
     new_action = executor.execute(db_session, case, decision)
 
     assert new_action.id != failed_act.id

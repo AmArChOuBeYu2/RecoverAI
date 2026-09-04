@@ -200,7 +200,7 @@ class OrchestratorService:
         Detect → Context → Segment → Eligibility → AI Diagnosis → Strategy → Policy → Execute → Verify → Attribute
         """
         # Step 1: Ensure RecoveryCase exists
-        case = transaction.recovery_case
+        case = db.query(RecoveryCase).filter_by(transaction_id=transaction.id).first() or transaction.recovery_case
         if not case:
             case = RecoveryCase(
                 transaction_id=transaction.id,
@@ -223,8 +223,8 @@ class OrchestratorService:
                 "amount_recovered_paise": transaction.amount_paise if case.status == RecoveryCaseStatus.RECOVERED.value else 0,
             }
 
-        if case.is_terminal and not force_reprocess:
-            logger.info(f"Skipping terminal case {case.id} (status={case.status}).")
+        if (case.is_terminal or case.status == RecoveryCaseStatus.AWAITING_VERIFICATION.value) and not force_reprocess:
+            logger.info(f"Skipping case {case.id} (status={case.status}).")
             return {
                 "case_id": case.id,
                 "transaction_id": transaction.id,
