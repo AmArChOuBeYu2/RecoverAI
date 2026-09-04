@@ -36,6 +36,7 @@ from backend.services.outcome_attribution import OutcomeAttributionService
 from backend.services.policy_simulator import PolicySimulator
 from backend.services.orchestrator import OrchestratorService
 from backend.services.metrics import MetricsService
+from backend.services.audit import AuditService
 
 
 __all__ = [
@@ -59,6 +60,7 @@ __all__ = [
     "PolicySimulator",
     "OrchestratorService",
     "MetricsService",
+    "AuditService",
     "calculate_wilson_lower_bound",
     "derive_sample_size_tier",
     "derive_confidence_level",
