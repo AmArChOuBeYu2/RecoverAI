@@ -487,6 +487,19 @@ $$\text{Economic Strategy Value Score} = \text{Expected Recovered Value} \times 
 
 **Rationale:** Establishes unambiguous deployment assumptions, database-level uniqueness guarantees, and explicit reconciliation rules for failure windows.
 
+---
+
+### DEC-038: Action Outcome Verification, Evidence Provenance, and Closed-Loop Attribution
+
+**Decision:** In Milestone 15:
+1. **Evidence Provenance Invariant**: Creating a Payment Link is an action, NOT recovery. Outcome verification strictly separates `REAL_TEST_MODE` actions verified via Razorpay API (`OutcomeSource.VERIFIED`) from `SIMULATED` actions evaluated deterministically against failure-category baseline rates (`OutcomeSource.SIMULATED`).
+2. **Deterministic Simulation Hash**: Simulated verification outcomes are determined deterministically using SHA-256 seed hashing of `case.id` + `action.id` against `SIMULATED_CONVERSION_RATES`, guaranteeing reproducible outcomes across batch runs.
+3. **Closed-Loop Feedback Updates**: Outcome attribution updates `StrategyOutcome` records, advances `RecoveryCase` to terminal states (`RECOVERED` or `UNRECOVERED`), updates `RecoveryStrategy` empirical statistics (`attempt_count`, `success_count`, `total_recovered_paise`, `recovery_rate`, `wilson_lower_bound`, `sample_size_sufficient`, `confidence_level`), and logs `OUTCOME_ATTRIBUTED` audit events.
+4. **Database Uniqueness**: All payment link test helpers and action fixtures use unique `razorpay_payment_link_id` values to strictly respect schema `unique=True` database constraints.
+
+**Rationale:** Preserves exact evidence provenance, guarantees reproducible outcome attribution, and closes the feedback loop to continuously optimize strategy ranking.
+
+
 
 
 

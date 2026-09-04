@@ -31,6 +31,8 @@ from backend.services.diagnosis import DiagnosisService
 from backend.services.strategy_engine import StrategyEngine
 from backend.services.strategy_optimizer import StrategyOptimizer
 from backend.services.executor import ActionExecutor, ActionExecutionError
+from backend.services.verification import VerificationService, VerificationResult
+from backend.services.outcome_attribution import OutcomeAttributionService
 
 
 __all__ = [
@@ -48,6 +50,9 @@ __all__ = [
     "StrategyOptimizer",
     "ActionExecutor",
     "ActionExecutionError",
+    "VerificationService",
+    "VerificationResult",
+    "OutcomeAttributionService",
     "calculate_wilson_lower_bound",
     "derive_sample_size_tier",
     "derive_confidence_level",
@@ -67,4 +72,5 @@ __all__ = [
     "ActionAuthorizationService",
     "ActionAuthorizationError",
 ]
+
 

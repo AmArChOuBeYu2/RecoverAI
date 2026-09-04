@@ -278,4 +278,42 @@ def execute_recovery_action(
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.post("/{case_id}/verify", response_model=Dict[str, Any])
+def verify_case_outcome(
+    case_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Verify action outcome for a recovery case, attribute strategy performance feedback,
+    and transition state machine to terminal states (RECOVERED or UNRECOVERED).
+    """
+    from backend.models.recovery_action import RecoveryAction
+    from backend.services.verification import VerificationService
+    from backend.services.outcome_attribution import OutcomeAttributionService
+
+    case = db.query(RecoveryCase).filter_by(id=case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail=f"Recovery case '{case_id}' not found")
+
+    action = (
+        db.query(RecoveryAction)
+        .filter_by(recovery_case_id=case_id)
+        .filter(RecoveryAction.status != "FAILED")
+        .order_by(RecoveryAction.executed_at.desc())
+        .first()
+    )
+    if not action:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Recovery case '{case_id}' has no active attempted recovery action to verify.",
+        )
+
+    verification_service = VerificationService()
+    v_res = verification_service.verify_action_outcome(db, case, action)
+    attribution_res = OutcomeAttributionService.attribute_verification_result(db, case, action, v_res)
+    db.commit()
+
+    return attribution_res
+
+
 
