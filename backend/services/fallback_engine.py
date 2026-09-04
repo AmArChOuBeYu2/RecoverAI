@@ -38,10 +38,11 @@ class FallbackEngine:
         Evaluate strategy evidence through the 4-level fallback hierarchy.
         Returns aggregate stats plus evidence trace with cold-start baseline semantics.
         """
+        from backend.services.segmentation import SegmentationService
+        canonical_4d_name = SegmentationService.derive_canonical_segment_name(
+            failure_category, payment_method, amount_range, customer_type
+        )
         method_str = payment_method.lower() if payment_method else "any"
-        cust_str = customer_type.lower() if customer_type else "any"
-        
-        canonical_4d_name = f"{failure_category.lower()}_{method_str}_{amount_range.lower()}_{cust_str}"
         aggregate_3d_prefix = f"{failure_category.lower()}_{method_str}_{amount_range.lower()}_"
         
         trace_steps = []

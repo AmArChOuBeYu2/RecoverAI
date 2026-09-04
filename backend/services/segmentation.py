@@ -85,14 +85,14 @@ class SegmentationService:
         {failure_category}_{payment_method}_{amount_range}_{customer_type}
         """
         cat_str = (failure_category or "unknown").lower()
-        method_str = (payment_method or "unknown").lower()
+        method_str = payment_method.lower() if payment_method else "any"
         
         if isinstance(amount_range_or_paise, int):
             amt_str = SegmentationService.derive_amount_range(amount_range_or_paise).lower()
         else:
             amt_str = (amount_range_or_paise or "mid").lower()
 
-        cust_str = (customer_type or "new").lower()
+        cust_str = customer_type.lower() if customer_type else "any"
         return f"{cat_str}_{method_str}_{amt_str}_{cust_str}"
 
     @staticmethod

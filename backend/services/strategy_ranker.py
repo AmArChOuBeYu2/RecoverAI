@@ -148,9 +148,10 @@ class StrategyRanker:
                 f"based on canonical 4D segment evidence."
             )
 
-        method_str = payment_method.lower() if payment_method else "any"
-        cust_str = customer_type.lower() if customer_type else "any"
-        canonical_name = f"{failure_category.lower()}_{method_str}_{amount_range.lower()}_{cust_str}"
+        from backend.services.segmentation import SegmentationService
+        canonical_name = SegmentationService.derive_canonical_segment_name(
+            failure_category, payment_method, amount_range, customer_type
+        )
 
         return {
             "segment_name": canonical_name,

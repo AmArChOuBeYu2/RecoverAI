@@ -21,16 +21,11 @@ EXACT_EDGE_CASE_AMOUNTS = [
     5000001, # ₹50,000.01 (Just above max auto action threshold)
 ]
 
+from backend.services.segmentation import SegmentationService
+
 def derive_amount_range(amount_paise: int) -> str:
     """Derive deterministic amount range enum from integer paise."""
-    if amount_paise < 50000:
-        return AmountRange.LOW.value
-    elif amount_paise <= 500000:
-        return AmountRange.MID.value
-    elif amount_paise <= 5000000:
-        return AmountRange.HIGH.value
-    else:
-        return AmountRange.PREMIUM.value
+    return SegmentationService.derive_amount_range(amount_paise)
 
 def derive_canonical_segment_name(
     failure_category: str,
@@ -39,12 +34,11 @@ def derive_canonical_segment_name(
     customer_type: str | None,
 ) -> str:
     """
-    Derive 4-dimensional canonical segment name:
-    failure_category x payment_method x amount_range x customer_type
+    Derive 4-dimensional canonical segment name using single authoritative SegmentationService.
     """
-    method_str = payment_method.lower() if payment_method else "any"
-    cust_type_str = customer_type.lower() if customer_type else "any"
-    return f"{failure_category.lower()}_{method_str}_{amount_range.lower()}_{cust_type_str}"
+    return SegmentationService.derive_canonical_segment_name(
+        failure_category, payment_method, amount_range, customer_type
+    )
 
 def generate_transactions(
     config: GeneratorConfig, customers: List[Dict[str, Any]], rng: random.Random
