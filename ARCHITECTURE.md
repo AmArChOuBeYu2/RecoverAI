@@ -491,3 +491,39 @@ The dashboard tracks the following metrics, each tagged with its evidence catego
 | Unrecovered Revenue | — | Breakdown by reason: policy blocked, ineligible, action failed, escalated, AI unavailable. |
 
 No metric combines VERIFIED and SIMULATED values without explicit labeling.
+
+---
+
+## Ingestion & System Architecture Invariants (Milestone 5)
+
+RecoverAI enforces six production-grade engineering invariants across ingestion, state management, transaction integrity, and causal attribution:
+
+### 1. Ingestion Flow Architecture
+```ascii
+Raw Request Body -> HMAC SHA-256 Signature Verification -> DB-Enforced Event Idempotency -> Atomic Transaction Router -> Domain Recovery Service -> State Machine Transition -> Strategy Outcome & Audit Trail
+```
+
+### 2. Database-Enforced Webhook Idempotency
+- Webhook idempotency is **database-enforced** via a unique constraint on `AuditEvent.event_id`.
+- Application check-then-insert race conditions are strictly prevented. When concurrent duplicate webhook deliveries arrive, database-level unique constraint enforcement catches the duplicate `event_id`, rolls back the duplicate transaction, and returns `{"status": "duplicate", "processed": false}`.
+
+### 3. Transactional Atomicity & Rollback
+- Every webhook ingestion and domain update operates inside an explicit database transaction boundary.
+- If domain processing fails at any point, the entire transaction (including audit event logs and transaction models) is completely **rolled back**. No event is marked as processed if the underlying domain update failed.
+
+### 4. Centrally Enforced State Machine Invariants
+- `RecoveryCase` state transitions are strictly governed by `StateMachineService`. Direct status field mutations outside the service are forbidden.
+- Invalid state transitions (e.g. `DETECTED` $\rightarrow$ `RECOVERED`) fail safely: an `InvalidStateTransitionError` is raised, `case.status` remains completely unchanged, and an immutable `INVALID_STATE_TRANSITION_BLOCKED` audit event is recorded.
+- Terminal states (`RECOVERED`, `UNRECOVERED`, `INELIGIBLE`, `POLICY_BLOCKED`, `ESCALATED`) are strictly immutable.
+
+### 5. Causal Recovery Attribution Invariant
+- RecoverAI credits revenue **only** when a valid causal chain exists:
+  $$\text{Failed Payment / Recovery Case} \longrightarrow \text{RecoverAI Action} \longrightarrow \text{Razorpay Payment Outcome} \longrightarrow \text{Verification} \longrightarrow \text{Attribution}$$
+- Successful payments received via Razorpay webhook that have **no matching RecoverAI action** are marked `unattributed` and **MUST NOT** be credited as RecoverAI revenue or update strategy stats.
+- Already-recovered cases reject duplicate attribution.
+
+### 6. Security & Credential Protection
+- `sanitize_payload` recursively redacts sensitive payment credentials (`card_number`, `cvv`, `password`, `secret`, `token`, `auth_code`) before persistence or logging.
+- Raw webhook payloads storing cardholder data are sanitized prior to audit storage.
+- Credentials and secrets never appear in API responses, logs, or error tracebacks.
+

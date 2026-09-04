@@ -4,6 +4,8 @@ RecoverAI FastAPI Main Application Entry Point
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from backend.api.routes.health import router as health_router
+from backend.api.routes.webhooks import router as webhooks_router
 
 app = FastAPI(
     title="RecoverAI",
@@ -19,11 +21,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/health")
-def health_check():
-    return {
-        "status": "healthy",
-        "service": "RecoverAI",
-        "version": "0.1.0",
-        "evidence_categories": ["OBSERVED", "VERIFIED", "SIMULATED", "PROJECTED"]
-    }
+app.include_router(health_router)
+app.include_router(webhooks_router)

@@ -29,9 +29,9 @@ class RazorpayClient:
         webhook_secret: Optional[str] = None,
         timeout: float = 10.0,
     ):
-        self.key_id = key_id or settings.RAZORPAY_KEY_ID
-        self.key_secret = key_secret or settings.RAZORPAY_KEY_SECRET
-        self.webhook_secret = webhook_secret or settings.RAZORPAY_WEBHOOK_SECRET
+        self._key_id = key_id
+        self._key_secret = key_secret
+        self._webhook_secret = webhook_secret
         self.timeout = timeout
 
         if not self.key_id or not self.key_secret:
@@ -39,9 +39,20 @@ class RazorpayClient:
 
         # Initialize official SDK client
         self._sdk_client = razorpay.Client(auth=(self.key_id, self.key_secret))
-        # Ensure timeout option is set if supported on SDK session
         if hasattr(self._sdk_client, "session") and hasattr(self._sdk_client.session, "timeout"):
             self._sdk_client.session.timeout = self.timeout
+
+    @property
+    def key_id(self) -> str:
+        return self._key_id or settings.RAZORPAY_KEY_ID
+
+    @property
+    def key_secret(self) -> str:
+        return self._key_secret or settings.RAZORPAY_KEY_SECRET
+
+    @property
+    def webhook_secret(self) -> str:
+        return self._webhook_secret or settings.RAZORPAY_WEBHOOK_SECRET
 
     def verify_webhook_signature(self, body_bytes: bytes | str, signature: str) -> bool:
         """
@@ -51,7 +62,8 @@ class RazorpayClient:
         if not signature:
             raise RazorpayWebhookSignatureError("Missing Razorpay signature header")
         
-        if not self.webhook_secret:
+        secret = self.webhook_secret
+        if not secret:
             raise RazorpayWebhookSignatureError("RAZORPAY_WEBHOOK_SECRET is not configured")
 
         if isinstance(body_bytes, bytes):
@@ -61,7 +73,7 @@ class RazorpayClient:
 
         try:
             self._sdk_client.utility.verify_webhook_signature(
-                body_str, signature, self.webhook_secret
+                body_str, signature, secret
             )
             return True
         except Exception as e:
