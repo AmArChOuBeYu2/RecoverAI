@@ -18,9 +18,11 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./recoverai.db"
     ECHO_SQL: bool = False
     
-    # LLM API Keys
+    # LLM Configuration
     OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o"
     GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-1.5-pro"
     
     # Razorpay API Credentials (Test Mode)
     RAZORPAY_KEY_ID: str = ""

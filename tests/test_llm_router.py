@@ -299,3 +299,35 @@ def test_prompt_no_hidden_ground_truth_leakage(sample_context):
     ]
     for term in forbidden_terms:
         assert term not in prompt_lower, f"Forbidden leakage term '{term}' found in user prompt!"
+
+# -----------------------------------------------------------------------------
+# 5. Sanity Check Regression Tests
+# -----------------------------------------------------------------------------
+
+def test_configurable_model_names():
+    """Verify provider model_name properties reflect configuration settings."""
+    openai_p = OpenAIProvider()
+    gemini_p = GeminiProvider()
+
+    assert openai_p.model_name == settings.OPENAI_MODEL
+    assert gemini_p.model_name == settings.GEMINI_MODEL
+
+def test_double_simulation_flag_fallback(db_session: Session, sample_context):
+    """Verify enabling both simulation failure flags forces fallback to deterministic provider."""
+    settings.SIMULATE_OPENAI_FAILURE = True
+    settings.SIMULATE_GEMINI_FAILURE = True
+
+    router = LLMRouter()
+    diag = router.diagnose_case(context=sample_context, db=db_session, case_id="case_double_sim")
+
+    assert diag.recommended_strategy == "PAYMENT_LINK"
+
+    invocations = db_session.query(LLMInvocation).filter_by(recovery_case_id="case_double_sim").all()
+    assert len(invocations) == 3
+    assert invocations[0].provider == "openai" and invocations[0].success is False
+    assert invocations[1].provider == "gemini" and invocations[1].success is False
+    assert invocations[2].provider == "deterministic" and invocations[2].success is True
+
+    settings.SIMULATE_OPENAI_FAILURE = False
+    settings.SIMULATE_GEMINI_FAILURE = False
+

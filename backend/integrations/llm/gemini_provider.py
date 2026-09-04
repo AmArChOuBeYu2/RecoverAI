@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 class GeminiProvider(LLMProvider):
     """Google Gemini LLM Provider."""
 
-    def __init__(self, api_key: str | None = None, model: str = "gemini-1.5-pro"):
+    def __init__(self, api_key: str | None = None, model: str | None = None):
         self._api_key = api_key or os.getenv("GEMINI_API_KEY", getattr(settings, "GEMINI_API_KEY", ""))
-        self._model = model
+        self._model = model or os.getenv("GEMINI_MODEL", getattr(settings, "GEMINI_MODEL", "gemini-1.5-pro"))
 
     @property
     def name(self) -> str:
@@ -46,31 +46,19 @@ class GeminiProvider(LLMProvider):
         combined_prompt = f"{SYSTEM_DIAGNOSIS_PROMPT}\n\n{user_prompt}"
 
         try:
-            # Try new google.genai SDK first
-            try:
-                from google import genai
-                from google.genai import types
+            from google import genai
+            from google.genai import types
 
-                client = genai.Client(api_key=self._api_key)
-                response = client.models.generate_content(
-                    model=self._model,
-                    contents=combined_prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.2,
-                    ),
-                )
-                raw_text = response.text or "{}"
-            except (ImportError, Exception) as sub_e:
-                # Fall back to google.generativeai if available
-                import google.generativeai as genai_legacy
-                genai_legacy.configure(api_key=self._api_key)
-                model_inst = genai_legacy.GenerativeModel(
-                    model_name=self._model,
-                    generation_config={"response_mime_type": "application/json", "temperature": 0.2}
-                )
-                response = model_inst.generate_content(combined_prompt)
-                raw_text = response.text or "{}"
+            client = genai.Client(api_key=self._api_key)
+            response = client.models.generate_content(
+                model=self._model,
+                contents=combined_prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.2,
+                ),
+            )
+            raw_text = response.text or "{}"
 
             # Strip markdown code blocks if present
             clean_text = raw_text.strip()

@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 class OpenAIProvider(LLMProvider):
     """OpenAI GPT-4o LLM Provider."""
 
-    def __init__(self, api_key: str | None = None, model: str = "gpt-4o"):
+    def __init__(self, api_key: str | None = None, model: str | None = None):
         self._api_key = api_key or os.getenv("OPENAI_API_KEY", getattr(settings, "OPENAI_API_KEY", ""))
-        self._model = model
+        self._model = model or os.getenv("OPENAI_MODEL", getattr(settings, "OPENAI_MODEL", "gpt-4o"))
 
     @property
     def name(self) -> str:
