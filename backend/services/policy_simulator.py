@@ -6,8 +6,8 @@ All results labeled simulation_mode = DataCategory.PROJECTED.value.
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime, timezone
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 
 from backend.models.customer import Customer
@@ -20,11 +20,10 @@ from backend.models.enums import (
     PolicyDecisionType,
     DataCategory,
     CustomerType,
-    AmountRange,
     RecoveryCaseStatus,
 )
 from backend.services.segmentation import SegmentationService
-from backend.services.verification import SIMULATED_CONVERSION_RATES, VerificationService
+from backend.services.verification import VerificationService
 from backend.services.policy_engine import PolicyEngine
 
 logger = logging.getLogger(__name__)
@@ -63,9 +62,16 @@ class PolicySimulator:
         Run side-by-side policy simulation comparing baseline vs RecoverAI optimized policy.
         """
         now = as_of_time or datetime.now(timezone.utc)
+        if as_of_time is None:
+            ist_hour = (now + timedelta(hours=5, minutes=30)).hour
+            if not (9 <= ist_hour < 21):
+                now = now.replace(hour=8, minute=30, second=0, microsecond=0)
 
-        # 1. Fetch transactions for simulation
-        txns = db.query(Transaction).order_by(Transaction.created_at.desc()).limit(limit).all()
+        # 1. Fetch transactions for simulation (strictly up to as_of_time to prevent temporal leakage)
+        query = db.query(Transaction)
+        if as_of_time:
+            query = query.filter(Transaction.created_at <= as_of_time)
+        txns = query.order_by(Transaction.created_at.desc()).limit(limit).all()
         if not txns:
             logger.warning("No transactions found for policy simulation.")
             empty_sim_baseline = cls._create_empty_simulation("current_baseline", batch_run_id)
@@ -95,7 +101,7 @@ class PolicySimulator:
     ) -> PolicySimulation:
         """
         Evaluate Baseline Policy ('current_baseline'):
-        Naive policy that sends a generic Payment Link for all failed transactions without segment awareness or eligibility bounds.
+        Naive benchmark policy that sends a generic Payment Link for all failed transactions without segment awareness or eligibility bounds.
         """
         total_txns = len(txns)
         revenue_at_risk_paise = sum(t.amount_paise for t in txns)
@@ -153,7 +159,7 @@ class PolicySimulator:
     ) -> PolicySimulation:
         """
         Evaluate RecoverAI Policy ('recoverai_optimized'):
-        Segment-aware strategy selection utilizing 4D canonical segmentation, policy engine safety rules, and strategy optimization.
+        Segment-aware strategy selection utilizing canonical segmentation, policy engine safety rules, and strategy optimization.
         """
         total_txns = len(txns)
         revenue_at_risk_paise = sum(t.amount_paise for t in txns)
@@ -167,13 +173,11 @@ class PolicySimulator:
         contacts_projected = 0
 
         for t in txns:
-            # Derive 4D segment
             cust_type = t.customer.customer_type if t.customer and t.customer.customer_type else CustomerType.NEW.value
             amt_range = SegmentationService.derive_amount_range(t.amount_paise)
             fc = t.failure_category or FailureCategory.UNKNOWN.value
             pm = t.payment_method or "card"
 
-            # Create transient in-memory objects for read-only policy evaluation
             transient_cust = Customer(
                 id=t.customer_id or f"sim_cust_{t.id}",
                 customer_type=cust_type,
@@ -193,10 +197,8 @@ class PolicySimulator:
                 actions=[],
             )
 
-            # Strategy Selection Optimization: Select optimal strategy per segment failure category
             selected_strat = cls._select_optimal_strategy_for_sim(fc, pm, amt_range)
 
-            # Evaluate PolicyEngine rules in memory (persist_decision=False)
             p_decision = PolicyEngine.evaluate(
                 case=transient_case,
                 proposed_strategy=selected_strat,
@@ -204,7 +206,6 @@ class PolicySimulator:
                 persist_decision=False,
             )
 
-            # Clear transient relationship backref so SQLAlchemy doesn't warn on flush
             transient_case.transaction = None
 
             if p_decision.decision == PolicyDecisionType.DENY.value:
@@ -214,7 +215,6 @@ class PolicySimulator:
                 escalations_projected += 1
                 continue
 
-            # Eligible & Approved under RecoverAI Policy
             eligible_count += 1
             eligible_revenue_paise += t.amount_paise
             actions_projected += 1
@@ -222,7 +222,6 @@ class PolicySimulator:
             if selected_strat in (StrategyType.PAYMENT_LINK.value, StrategyType.REMINDER.value, StrategyType.METHOD_SWITCH.value):
                 contacts_projected += 1
 
-            # Compute segment-optimized conversion rate
             base_conv = VerificationService.get_simulated_conversion_probability(fc)
             strat_mult = STRATEGY_CONVERSION_MULTIPLIERS.get(selected_strat, 1.0)
             effective_conv = min(0.95, base_conv * strat_mult)
@@ -286,7 +285,7 @@ class PolicySimulator:
     @classmethod
     def _format_comparison_result(cls, baseline: PolicySimulation, optimized: PolicySimulation) -> Dict[str, Any]:
         """Format comparison dictionary between baseline and optimized policy simulations."""
-        incremental_recovered_paise = max(0, optimized.projected_recovered_paise - baseline.projected_recovered_paise)
+        incremental_recovered_paise = optimized.projected_recovered_paise - baseline.projected_recovered_paise
         incremental_recovery_rate_diff = round(optimized.projected_recovery_rate - baseline.projected_recovery_rate, 4)
 
         return {
