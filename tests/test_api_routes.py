@@ -260,10 +260,10 @@ def test_recovery_seed_endpoint(db_session: Session):
     assert data["transactions_created"] > 0
 
 def test_cors_middleware_headers():
-    """Verify CORS middleware headers allow origin for cross-origin browser requests."""
+    """Verify CORS middleware headers allow wildcard origin for cross-origin browser requests when allow_credentials=False."""
     res = client.get("/api/health", headers={"Origin": "http://localhost:3000"})
     assert res.status_code == 200
-    assert res.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    assert res.headers.get("access-control-allow-origin") == "*"
 
 def test_health_privacy_no_credential_leakage():
     """Verify GET /api/health does not reveal secret environment strings or API keys."""

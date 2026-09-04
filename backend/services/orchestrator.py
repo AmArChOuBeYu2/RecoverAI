@@ -40,7 +40,8 @@ logger = logging.getLogger(__name__)
 class OrchestratorService:
     """
     Main Orchestration Agent Loop for RecoverAI.
-    Ties together all pipeline steps into a fault-tolerant batch run loop.
+    Ties together all pipeline steps into a fault-tolerant batch run loop:
+    Detection → Context → Segmentation → Eligibility → Diagnosis → Strategy → Policy → Authorization → Execution → Verification → Attribution.
     """
 
     @classmethod
