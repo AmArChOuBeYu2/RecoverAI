@@ -22,6 +22,7 @@ from backend.models.enums import (
     RecoveryCaseStatus,
     PolicyDecisionType,
     DataCategory,
+    OutcomeSource,
 )
 from backend.services.context_builder import ContextBuilder
 from backend.services.segmentation import SegmentationService
@@ -91,6 +92,7 @@ class OrchestratorService:
 
         # 3. Process each transaction through pipeline
         for t in txns:
+            nested = db.begin_nested()
             try:
                 result = cls._process_single_transaction(
                     db=db,
@@ -98,6 +100,7 @@ class OrchestratorService:
                     batch_run_id=batch_run.id,
                     force_reprocess=force_reprocess,
                 )
+                nested.commit()
                 processed_count += 1
                 if result.get("recovered"):
                     success_count += 1
@@ -106,18 +109,26 @@ class OrchestratorService:
                 case_summaries.append(result)
 
             except Exception as e:
+                nested.rollback()
                 logger.error(f"Error processing transaction {t.id} in batch {batch_run.id}: {str(e)}", exc_info=True)
                 error_count += 1
                 processed_count += 1
                 
-                # Log audit event for case failure
-                if t.recovery_case:
-                    db.add(AuditEvent(
-                        recovery_case_id=t.recovery_case.id,
-                        event_type="BATCH_PROCESSING_ERROR",
-                        actor="system",
-                        details={"error": str(e), "transaction_id": t.id, "batch_run_id": batch_run.id},
-                    ))
+                # Log audit event for case failure in isolated session context
+                try:
+                    case_id = t.recovery_case.id if t.recovery_case else None
+                    if case_id:
+                        db.add(AuditEvent(
+                            recovery_case_id=case_id,
+                            event_type="BATCH_PROCESSING_ERROR",
+                            actor="system",
+                            description=f"Batch error for transaction '{t.id}': {str(e)}",
+                            details={"error": str(e), "transaction_id": t.id, "batch_run_id": batch_run.id},
+                        ))
+                        db.flush()
+                except Exception as audit_exc:
+                    logger.warning(f"Failed to record BATCH_PROCESSING_ERROR audit event: {audit_exc}")
+                    db.rollback()
 
                 case_summaries.append({
                     "transaction_id": t.id,
@@ -198,9 +209,9 @@ class OrchestratorService:
             db.add(case)
             db.flush()
 
-        # Step 2: Idempotency check on terminal cases
-        if case.is_terminal and not force_reprocess:
-            logger.info(f"Skipping terminal case {case.id} (status={case.status}).")
+        # Step 2: Immutable Terminal State Protection (RECOVERED and UNRECOVERED cannot be rerun)
+        if case.status in (RecoveryCaseStatus.RECOVERED.value, RecoveryCaseStatus.UNRECOVERED.value):
+            logger.info(f"Case {case.id} is in terminal state '{case.status}'. Skipping re-processing.")
             return {
                 "case_id": case.id,
                 "transaction_id": transaction.id,
@@ -209,6 +220,18 @@ class OrchestratorService:
                 "reason": f"Case is in terminal state '{case.status}'",
                 "recovered": case.status == RecoveryCaseStatus.RECOVERED.value,
                 "amount_recovered_paise": transaction.amount_paise if case.status == RecoveryCaseStatus.RECOVERED.value else 0,
+            }
+
+        if case.is_terminal and not force_reprocess:
+            logger.info(f"Skipping terminal case {case.id} (status={case.status}).")
+            return {
+                "case_id": case.id,
+                "transaction_id": transaction.id,
+                "status": case.status,
+                "skipped": True,
+                "reason": f"Case is in terminal state '{case.status}'",
+                "recovered": False,
+                "amount_recovered_paise": 0,
             }
 
         # Step 3: Failure Category Classification Verification
@@ -301,6 +324,7 @@ class OrchestratorService:
             case=case,
             decision=decision,
             context=context,
+            policy_decision=policy_res,
             actor="SYSTEM",
         )
 
@@ -322,8 +346,11 @@ class OrchestratorService:
 
         db.flush()
 
-        is_recovered = (attribution.get("outcome") == "RECOVERED")
-        amount_recovered = attribution.get("amount_recovered_paise", 0) if is_recovered else 0
+        is_authoritative_recovered = (
+            attribution.get("outcome") == "RECOVERED"
+            and attribution.get("outcome_source") in (OutcomeSource.VERIFIED.value, "TEST_MODE_VERIFIED", DataCategory.OBSERVED.value)
+        )
+        amount_authoritative_recovered = attribution.get("amount_recovered_paise", 0) if is_authoritative_recovered else 0
 
         return {
             "case_id": case.id,
@@ -336,7 +363,8 @@ class OrchestratorService:
             "verification_status": verification.outcome,
             "verification_source": verification.outcome_source,
             "executed": True,
-            "recovered": is_recovered,
-            "amount_recovered_paise": amount_recovered,
-            "amount_recovered_rupees": round(amount_recovered / 100.0, 2),
+            "recovered": is_authoritative_recovered,
+            "simulated_recovered": (attribution.get("outcome") == "RECOVERED" and attribution.get("outcome_source") == OutcomeSource.SIMULATED.value),
+            "amount_recovered_paise": amount_authoritative_recovered,
+            "amount_recovered_rupees": round(amount_authoritative_recovered / 100.0, 2),
         }

@@ -15,6 +15,7 @@ from backend.models.enums import (
     ActionExecutionMode,
     OutcomeSource,
     FailureCategory,
+    StrategyType,
 )
 from backend.integrations.razorpay.payment_links import RazorpayPaymentLinkService
 from backend.integrations.razorpay.exceptions import RazorpayIntegrationError
@@ -163,7 +164,29 @@ class VerificationService:
                     details={"error": str(e), "razorpay_payment_link_id": action.razorpay_payment_link_id},
                 )
 
-        # 2. SIMULATED MODE VERIFICATION
+        # 2. DELAYED RETRY & SCHEDULED ACTIONS
+        if action.action_type == StrategyType.DELAYED_RETRY.value or action.status == "SCHEDULED":
+            return VerificationResult(
+                case_id=case.id,
+                action_id=action.id,
+                outcome="PENDING",
+                amount_recovered_paise=0,
+                outcome_source=OutcomeSource.SIMULATED.value,
+                details={"reason": "Delayed retry is scheduled for future execution; outcome pending"},
+            )
+
+        # 3. ESCALATION & HUMAN REVIEW ACTIONS
+        if action.action_type in (StrategyType.ESCALATION.value, StrategyType.HUMAN_REVIEW.value):
+            return VerificationResult(
+                case_id=case.id,
+                action_id=action.id,
+                outcome="PENDING",
+                amount_recovered_paise=0,
+                outcome_source=OutcomeSource.SIMULATED.value,
+                details={"reason": "Case requires human review or escalation; outcome pending"},
+            )
+
+        # 4. SIMULATED MODE VERIFICATION FOR COMPLETED / IMMEDIATE ACTIONS
         is_sim_success = self.determine_simulated_outcome(case, action)
         if is_sim_success:
             return VerificationResult(

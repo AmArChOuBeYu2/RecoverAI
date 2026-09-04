@@ -102,6 +102,7 @@ class ActionExecutor:
         case: RecoveryCase,
         decision: RecoveryDecision,
         context: Optional[Dict[str, Any]] = None,
+        policy_decision: Optional[Any] = None,
         actor: str = "SYSTEM",
     ) -> RecoveryAction:
         """
@@ -135,16 +136,17 @@ class ActionExecutor:
                 raise ActionAuthorizationError("TRUST_GATE_REJECTED", trust_res.reason)
 
         # 3. Action Authorization check
-        from backend.services.policy_engine import PolicyEngine
-        policy_eval_result = PolicyEngine.evaluate(
-            case=case,
-            proposed_strategy=decision.selected_strategy,
-            ai_confidence=decision.ai_confidence,
-            context=context,
-            db=db,
-            persist_decision=True,
-        )
-        ActionAuthorizationService.authorize_action(case, policy_eval_result)
+        if policy_decision is None:
+            from backend.services.policy_engine import PolicyEngine
+            policy_decision = PolicyEngine.evaluate(
+                case=case,
+                proposed_strategy=decision.selected_strategy,
+                ai_confidence=decision.ai_confidence,
+                context=context,
+                db=db,
+                persist_decision=False,
+            )
+        ActionAuthorizationService.authorize_action(case, policy_decision)
 
         strategy_type = decision.selected_strategy or decision.ai_recommended_strategy or StrategyType.PAYMENT_LINK.value
 

@@ -169,3 +169,168 @@ def test_orchestrator_process_single_case(db_session: Session):
     assert res["transaction_id"] == txn.id
     assert res["executed"] is True
     assert "verification_status" in res
+
+
+def test_payment_link_lifecycle_leaves_awaiting_verification(db_session: Session):
+    """REGRESSION: Payment Link creation must leave case in AWAITING_VERIFICATION (not RECOVERED or UNRECOVERED)."""
+    from unittest.mock import MagicMock
+    from backend.models.enums import OutcomeSource
+    from backend.integrations.razorpay.schemas import RazorpayPaymentLinkResponse
+    from backend.services.executor import ActionExecutor
+
+    txns = create_sample_failed_transactions(db_session, count=1)
+    txn = txns[0]
+
+    # Mock Razorpay API returning status='created' (unpaid payment link)
+    mock_service = MagicMock()
+    mock_service.fetch_payment_link.return_value = RazorpayPaymentLinkResponse(
+        id="plink_unpaid_test",
+        amount=txn.amount_paise,
+        currency="INR",
+        status="created",
+        short_url="https://rzp.io/i/unpaid_test",
+        created_at=int(datetime.now(timezone.utc).timestamp()),
+    )
+    mock_service.create_payment_link.return_value = RazorpayPaymentLinkResponse(
+        id="plink_unpaid_test",
+        amount=txn.amount_paise,
+        currency="INR",
+        status="created",
+        short_url="https://rzp.io/i/unpaid_test",
+        created_at=int(datetime.now(timezone.utc).timestamp()),
+    )
+
+    with pytest.MonkeyPatch.context() as mp:
+        from backend.services.verification import VerificationService
+        mp.setattr(VerificationService, "__init__", lambda self, payment_link_service=None: setattr(self, "payment_link_service", mock_service))
+        mp.setattr(ActionExecutor, "__init__", lambda self, payment_link_service=None: setattr(self, "payment_link_service", mock_service))
+        mp.setattr(ActionExecutor, "determine_execution_mode", lambda self, db, action_type: ("REAL_TEST_MODE", "RAZORPAY_TEST"))
+
+        res = OrchestratorService.run_batch(db_session, transaction_ids=[txn.id])
+
+    summary = res["case_summaries"][0]
+    case = db_session.query(RecoveryCase).filter_by(id=summary["case_id"]).first()
+
+    assert case.status == RecoveryCaseStatus.AWAITING_VERIFICATION.value
+    assert case.is_terminal is False
+    assert summary["recovered"] is False
+    assert summary["amount_recovered_paise"] == 0
+    assert res["success_count"] == 0
+    assert res["total_recovered_paise"] == 0
+
+
+def test_force_reprocess_safety_invariants(db_session: Session):
+    """REGRESSION: force_reprocess=True MUST NOT rerun RECOVERED or UNRECOVERED terminal cases."""
+    txns = create_sample_failed_transactions(db_session, count=2)
+
+    case1 = RecoveryCase(transaction_id=txns[0].id, customer_id=txns[0].customer_id, status=RecoveryCaseStatus.RECOVERED.value, is_terminal=True)
+    case2 = RecoveryCase(transaction_id=txns[1].id, customer_id=txns[1].customer_id, status=RecoveryCaseStatus.UNRECOVERED.value, is_terminal=True)
+    db_session.add_all([case1, case2])
+    db_session.flush()
+
+    res = OrchestratorService.run_batch(db_session, transaction_ids=[txns[0].id, txns[1].id], force_reprocess=True)
+
+    assert res["total_processed"] == 2
+    for sum_item in res["case_summaries"]:
+        assert sum_item.get("skipped") is True
+        assert "terminal state" in sum_item.get("reason", "").lower()
+
+    # Verify states remain untouched
+    assert case1.status == RecoveryCaseStatus.RECOVERED.value
+    assert case2.status == RecoveryCaseStatus.UNRECOVERED.value
+
+
+def test_single_policy_decision_per_intent(db_session: Session):
+    """REGRESSION: Exactly one PolicyDecision DB record must be created per execution intent."""
+    from backend.models.policy_decision import PolicyDecision
+
+    txns = create_sample_failed_transactions(db_session, count=1)
+    res = OrchestratorService.run_batch(db_session, transaction_ids=[txns[0].id])
+
+    case_id = res["case_summaries"][0]["case_id"]
+    decisions = db_session.query(PolicyDecision).filter_by(recovery_case_id=case_id).all()
+
+    assert len(decisions) == 1
+
+
+def test_per_case_transaction_isolation_savepoint(db_session: Session, monkeypatch):
+    """REGRESSION: Exception in Case A rolls back to savepoint and does not poison Case B's session."""
+    txns = create_sample_failed_transactions(db_session, count=2)
+
+    orig_process = OrchestratorService._process_single_transaction
+    fail_first = True
+
+    def mock_process_fail_first(db, transaction, batch_run_id=None, force_reprocess=False):
+        nonlocal fail_first
+        if transaction.id == txns[0].id and fail_first:
+            # Simulate partial DB work followed by a crash
+            db.add(RecoveryCase(transaction_id=transaction.id, customer_id=transaction.customer_id, status="TEST_CRASH"))
+            db.flush()
+            raise RuntimeError("Database flush error simulation on Case A")
+        return orig_process(db, transaction, batch_run_id, force_reprocess)
+
+    monkeypatch.setattr(OrchestratorService, "_process_single_transaction", mock_process_fail_first)
+
+    res = OrchestratorService.run_batch(db_session, transaction_ids=[txns[0].id, txns[1].id])
+
+    assert res["status"] == "COMPLETED_WITH_ERRORS"
+    assert res["total_processed"] == 2
+    assert res["error_count"] == 1
+
+    sum0 = next(s for s in res["case_summaries"] if s["transaction_id"] == txns[0].id)
+    sum1 = next(s for s in res["case_summaries"] if s["transaction_id"] == txns[1].id)
+
+    assert sum0["status"] == "ERROR"
+    assert sum1["executed"] is True
+
+
+def test_batch_success_and_revenue_semantics(db_session: Session):
+    """REGRESSION: success_count and total_recovered_paise count ONLY authoritative VERIFIED recoveries."""
+    txns = create_sample_failed_transactions(db_session, count=1)
+    txn = txns[0]
+
+    res = OrchestratorService.run_batch(db_session, transaction_ids=[txn.id])
+
+    # Default simulated/creation actions do NOT count as authoritative recovered revenue
+    assert res["success_count"] == 0
+    assert res["total_recovered_paise"] == 0
+
+
+def test_interrupted_batch_resume_idempotency(db_session: Session):
+    """REGRESSION: Interrupted batch resume skips RECOVERED, reuses active RecoveryAction, and processes new case."""
+    from backend.models.recovery_action import RecoveryAction
+    from backend.models.strategy_outcome import StrategyOutcome
+
+    txns = create_sample_failed_transactions(db_session, count=3)
+
+    # Case A is RECOVERED
+    case_a = RecoveryCase(transaction_id=txns[0].id, customer_id=txns[0].customer_id, status=RecoveryCaseStatus.RECOVERED.value, is_terminal=True)
+    db_session.add(case_a)
+
+    # Case B has active RecoveryAction in AWAITING_VERIFICATION
+    case_b = RecoveryCase(transaction_id=txns[1].id, customer_id=txns[1].customer_id, status=RecoveryCaseStatus.AWAITING_VERIFICATION.value)
+    db_session.add(case_b)
+    db_session.flush()
+
+    action_b = RecoveryAction(recovery_case_id=case_b.id, action_type="PAYMENT_LINK", execution_mode="SIMULATED", status="SENT")
+    db_session.add(action_b)
+    db_session.flush()
+
+    # Case C is unprocessed (no case record yet)
+
+    res = OrchestratorService.run_batch(db_session, transaction_ids=[t.id for t in txns])
+
+    assert res["total_processed"] == 3
+
+    # Case A skipped
+    sum_a = next(s for s in res["case_summaries"] if s["transaction_id"] == txns[0].id)
+    assert sum_a.get("skipped") is True
+
+    # Case B did not create duplicate action
+    actions_b = db_session.query(RecoveryAction).filter_by(recovery_case_id=case_b.id).all()
+    assert len(actions_b) == 1
+
+    # Case C processed
+    sum_c = next(s for s in res["case_summaries"] if s["transaction_id"] == txns[2].id)
+    assert sum_c["executed"] is True
+

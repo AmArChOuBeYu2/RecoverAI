@@ -48,7 +48,7 @@ class ContextBuilder:
                 "action_type": a.action_type,
                 "execution_mode": a.execution_mode,
                 "status": a.status,
-                "created_at": a.created_at.isoformat() if a.created_at else None,
+                "created_at": a.executed_at.isoformat() if a.executed_at else None,
             }
             for a in actions
         ]
