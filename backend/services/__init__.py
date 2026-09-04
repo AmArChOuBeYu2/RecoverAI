@@ -35,6 +35,7 @@ from backend.services.verification import VerificationService, VerificationResul
 from backend.services.outcome_attribution import OutcomeAttributionService
 from backend.services.policy_simulator import PolicySimulator
 from backend.services.orchestrator import OrchestratorService
+from backend.services.metrics import MetricsService
 
 
 __all__ = [
@@ -57,6 +58,7 @@ __all__ = [
     "OutcomeAttributionService",
     "PolicySimulator",
     "OrchestratorService",
+    "MetricsService",
     "calculate_wilson_lower_bound",
     "derive_sample_size_tier",
     "derive_confidence_level",
