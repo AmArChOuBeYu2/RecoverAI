@@ -248,3 +248,89 @@ def test_honest_metrics_data_category_isolation(db_session: Session):
     # Ensure no generic combined 'total_recovered' conflates them without explicit labeling
     assert "verified_recovered_paise" in m
     assert "simulated_recovered_paise" in m
+
+
+def test_action_success_is_not_recovery(db_session: Session):
+    """AUDIT REGRESSION: Creating an unpaid Payment Link increases actions_attempted but leaves verified recovered at 0."""
+    cust = Customer(name="Unpaid User", email="unpaid@example.com")
+    db_session.add(cust)
+    db_session.flush()
+
+    txn = Transaction(
+        razorpay_payment_id="pay_unpaid_1",
+        customer_id=cust.id,
+        amount_paise=300000,
+        currency="INR",
+        status=TransactionStatus.FAILED.value,
+        failure_category=FailureCategory.AUTHENTICATION_FAILURE.value,
+        payment_method="card",
+    )
+    db_session.add(txn)
+    db_session.flush()
+
+    case = RecoveryCase(
+        transaction_id=txn.id,
+        customer_id=cust.id,
+        status=RecoveryCaseStatus.AWAITING_VERIFICATION.value,
+    )
+    db_session.add(case)
+    db_session.flush()
+
+    action = RecoveryAction(
+        recovery_case_id=case.id,
+        action_type="PAYMENT_LINK",
+        execution_mode=ActionExecutionMode.REAL_TEST_MODE.value,
+        status="SENT",
+        razorpay_payment_link_id="plink_unpaid_1",
+    )
+    db_session.add(action)
+    db_session.flush()
+
+    m = MetricsService.compute_portfolio_metrics(db_session)
+
+    assert m["actions_attempted"] == 1
+    assert m["verified_recovered_count"] == 0
+    assert m["verified_recovered_paise"] == 0
+    assert m["unrecovered_breakdown_paise"]["unpaid_expired_paise"] == 300000
+
+
+def test_revenue_at_risk_explicit_definition(db_session: Session):
+    """AUDIT REGRESSION: Revenue at risk equals sum of failed, ineligible, recovered, and unrecovered transactions."""
+    create_sample_metrics_data(db_session)
+
+    m = MetricsService.compute_portfolio_metrics(db_session)
+
+    # 4 txns: 200k (recovered) + 150k (recovered) + 500k (blocked) + 100k (ineligible) = 950k paise
+    assert m["total_revenue_at_risk_paise"] == 950000
+    assert m["total_transaction_value_paise"] == 950000
+
+
+def test_unrecovered_reason_buckets_mutually_exclusive(db_session: Session):
+    """AUDIT REGRESSION: sum(unrecovered_breakdown_paise.values()) == total_unrecovered_paise."""
+    create_sample_metrics_data(db_session)
+
+    m = MetricsService.compute_portfolio_metrics(db_session)
+
+    breakdown = m["unrecovered_breakdown_paise"]
+    bucket_sum = sum(breakdown.values())
+
+    assert bucket_sum == m["total_unrecovered_paise"]
+    # 500k (policy_blocked) + 100k (ineligible) = 600k paise
+    assert bucket_sum == 600000
+
+
+def test_zero_data_and_null_aggregation_safety(db_session: Session):
+    """AUDIT REGRESSION: Empty DB produces 0 paise, 0 count, 0.0 rates, and no division errors."""
+    m = MetricsService.compute_portfolio_metrics(db_session)
+
+    assert m["total_transaction_count"] == 0
+    assert m["total_transaction_value_paise"] == 0
+    assert m["eligible_transaction_count"] == 0
+    assert m["verified_recovered_paise"] == 0
+    assert m["case_recovery_rate"] == 0.0
+    assert m["revenue_recovery_rate"] == 0.0
+    assert m["action_success_rate"] == 0.0
+    assert m["reliability_rates"]["ai_failure_rate"] == 0.0
+    assert m["reliability_rates"]["provider_fallback_rate"] == 0.0
+    assert m["reliability_rates"]["razorpay_api_failure_rate"] == 0.0
+

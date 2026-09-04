@@ -155,7 +155,7 @@ class MetricsService:
         simulated_recovered_count = len(simulated_outcomes)
         simulated_recovered_paise = sum(o.amount_recovered_paise for o in simulated_outcomes)
 
-        # 6. Unrecovered Revenue Breakdown by System Root Cause
+        # 6. Unrecovered Revenue Breakdown by System Root Cause (Mutually Exclusive Buckets)
         unrecovered_cases = case_query.filter(
             RecoveryCase.status.in_([
                 RecoveryCaseStatus.UNRECOVERED.value,
@@ -175,12 +175,18 @@ class MetricsService:
             "other_unrecovered_paise": 0,
         }
 
+        # Check for cases with failed actions to classify action_failed_paise
+        failed_actions = action_query.filter(RecoveryAction.status == "FAILED").all()
+        failed_action_case_ids = set(a.recovery_case_id for a in failed_actions)
+
         total_unrecovered_paise = 0
         for c in unrecovered_cases:
             amt = c.transaction.amount_paise if c.transaction else 0
             total_unrecovered_paise += amt
 
-            if c.status == RecoveryCaseStatus.POLICY_BLOCKED.value:
+            if c.id in failed_action_case_ids:
+                unrecovered_breakdown["action_failed_paise"] += amt
+            elif c.status == RecoveryCaseStatus.POLICY_BLOCKED.value:
                 unrecovered_breakdown["policy_blocked_paise"] += amt
             elif c.status == RecoveryCaseStatus.INELIGIBLE.value:
                 unrecovered_breakdown["ineligible_paise"] += amt
@@ -191,16 +197,9 @@ class MetricsService:
             elif c.status == RecoveryCaseStatus.UNRECOVERED.value:
                 unrecovered_breakdown["other_unrecovered_paise"] += amt
 
-        # Add failed action amounts to action_failed_paise
-        failed_actions = action_query.filter(RecoveryAction.status == "FAILED").all()
-        failed_action_cases = set(a.recovery_case_id for a in failed_actions)
-        for fc_id in failed_action_cases:
-            c = db.query(RecoveryCase).filter_by(id=fc_id).first()
-            if c and c.transaction:
-                unrecovered_breakdown["action_failed_paise"] += c.transaction.amount_paise
-
         # 7. System Performance & Reliability Rates
-        recovery_rate = (verified_recovered_count / eligible_tx_count) if eligible_tx_count > 0 else 0.0
+        case_recovery_rate = (verified_recovered_count / eligible_tx_count) if eligible_tx_count > 0 else 0.0
+        revenue_recovery_rate = (verified_recovered_paise / eligible_revenue_paise) if eligible_revenue_paise > 0 else 0.0
         action_success_rate = (verified_recovered_count / total_actions_attempted) if total_actions_attempted > 0 else 0.0
 
         # Duplicate actions prevented count (where execution returned existing action)
@@ -255,7 +254,9 @@ class MetricsService:
             "total_unrecovered_paise": total_unrecovered_paise,
             "total_unrecovered_rupees": round(total_unrecovered_paise / 100.0, 2),
             "unrecovered_breakdown_paise": unrecovered_breakdown,
-            "recovery_rate": round(recovery_rate, 4),
+            "case_recovery_rate": round(case_recovery_rate, 4),
+            "revenue_recovery_rate": round(revenue_recovery_rate, 4),
+            "recovery_rate": round(case_recovery_rate, 4),
             "action_success_rate": round(action_success_rate, 4),
             "duplicate_actions_prevented": duplicate_prevented_count,
             "reliability_rates": {
