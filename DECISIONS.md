@@ -434,3 +434,20 @@ $$\text{Economic Strategy Value Score} = \text{Expected Recovered Value} \times 
 **Decision:** Strategy evaluation via `POST /api/recovery/evaluate/{case_id}` or `StrategyEngine.evaluate_case_strategies` is database-enforced idempotent. If a `RecoveryDecision` already exists for an evaluated case and `force_reevaluate=False`, the engine returns the existing decision record without creating duplicate database entries or mutating stored decision-time evidence.
 
 **Rationale:** Preserves exact historical decision-time evidence (`strategy_evidence` and `competing_strategies`) for auditability, preventing future recovery outcomes from mutating historic decision records.
+
+---
+
+### DEC-033: Attempt-Weighted Portfolio Strategy Performance Aggregation
+
+**Decision:** Portfolio-level recovery rates in `StrategyOptimizer` are calculated strictly as `total_successes / total_attempts` across underlying strategy outcomes, rather than taking an unweighted average of individual segment recovery rates. Monetary portfolio totals are summed from raw integer-paise quantities.
+
+**Rationale:** Unweighted averages of segment recovery rates produce mathematically flawed metrics (e.g. averaging a $100\%$ rate on 1 attempt with a $20\%$ rate on 100 attempts would yield a false $60\%$ rate instead of the true $21.8\%$ attempt-weighted rate). Integer-paise summation guarantees exact monetary accounting without floating-point drift.
+
+---
+
+### DEC-034: Zero Evidence Handling and Full Provenance Preservation
+
+**Decision:** Segments and candidate strategies with zero observed attempts are explicitly categorized as `sample_size_tier = "INSUFFICIENT"` and `evidence_status = "INSUFFICIENT_EVIDENCE"` with zero recovery rates. Zero evidence is NOT interpreted as poor strategy performance. `StrategyOptimizer` and `GET /api/strategies` preserve all four evidence categories (`OBSERVED`, `VERIFIED`, `SIMULATED`, `PROJECTED`) and their underlying provenance details (`SYNTHETIC`, `RAZORPAY_TEST_MODE`, `SIMULATION_ENGINE`).
+
+**Rationale:** Zero evidence represents a cold-start state requiring evidence-gathering or deterministic baseline fallbacks, not a failed strategy. Preserving `VERIFIED` and `RAZORPAY_TEST_MODE` metadata ensures test mode API outcomes are auditable and distinguishable from local synthetic or simulated dataset records.
+

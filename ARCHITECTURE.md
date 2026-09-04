@@ -426,9 +426,17 @@ The Deterministic Policy Engine enforces 9 configurable safety rules. No action 
 ### Strategies  
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/strategies` | Strategy performance across all segments |
-| GET | `/api/strategies/segment/{segment_id}` | Strategies for a specific segment |
-| GET | `/api/strategies/compare` | Side-by-side strategy comparison |
+| GET | `/api/strategies` | Strategy performance across all segments (supports optional `failure_category` and `payment_method` filters) |
+| GET | `/api/strategies/segment/{segment_id}` | Detailed strategy performance breakdown and ranked alternatives for a specific segment ID |
+| GET | `/api/strategies/compare` | Side-by-side candidate strategy comparison matrix for a 4D dimensional lookup |
+
+#### Portfolio Aggregation Formulas
+- **Attempt-Weighted Portfolio Recovery Rate**:
+  $$\text{Portfolio Recovery Rate} = \frac{\sum \text{total\_successes}}{\sum \text{total\_attempts}}$$
+- **Integer-Paise Monetary Totals**:
+  $$\text{Portfolio Total Recovered Paise} = \sum \text{amount\_recovered\_paise}$$
+- **Attempt-Weighted Average Recovered Paise**:
+  $$\text{Portfolio Avg Recovered Paise} = \frac{\text{Portfolio Total Recovered Paise}}{\sum \text{total\_attempts}}$$
 
 ### Simulator
 | Method | Endpoint | Description |
