@@ -38,7 +38,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={
-            "detail": f"An unexpected internal error occurred: {str(exc)}",
+            "detail": "An unexpected internal error occurred. Please contact system administrator.",
             "path": request.url.path,
         },
     )

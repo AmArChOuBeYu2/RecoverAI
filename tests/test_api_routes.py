@@ -258,3 +258,31 @@ def test_recovery_seed_endpoint(db_session: Session):
     data = res.json()
     assert data["status"] == "seeded"
     assert data["transactions_created"] > 0
+
+def test_cors_middleware_headers():
+    """Verify CORS middleware headers allow origin for cross-origin browser requests."""
+    res = client.get("/api/health", headers={"Origin": "http://localhost:3000"})
+    assert res.status_code == 200
+    assert res.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+def test_health_privacy_no_credential_leakage():
+    """Verify GET /api/health does not reveal secret environment strings or API keys."""
+    res = client.get("/api/health")
+    assert res.status_code == 200
+    data = res.json()
+    res_str = str(data)
+    assert "sk_" not in res_str
+    assert "secret_" not in res_str
+    assert "key_secret" not in res_str
+
+def test_integer_paise_monetary_contract(db_session: Session):
+    """Verify financial API endpoints return integer paise amounts and derived rupee floats."""
+    seed_sample_case(db_session)
+    res = client.get("/api/transactions")
+    assert res.status_code == 200
+    tx = res.json()["transactions"][0]
+    assert isinstance(tx["amount_paise"], int)
+    assert isinstance(tx["amount_rupees"], float)
+    assert tx["amount_paise"] == 150000
+    assert tx["amount_rupees"] == 1500.00
+
