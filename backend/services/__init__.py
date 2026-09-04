@@ -23,11 +23,14 @@ from backend.services.trust_gate import TrustGateService, TrustGateResult
 from backend.services.policy_engine import PolicyEngine, PolicyEvaluationResult, RuleEvaluationDetail
 from backend.services.authorization import ActionAuthorizationService, ActionAuthorizationError
 
+from backend.services.segmentation import SegmentationService
+
 __all__ = [
     "sanitize_payload",
     "StateMachineService",
     "InvalidStateTransitionError",
     "RecoveryService",
+    "SegmentationService",
     "calculate_wilson_lower_bound",
     "derive_sample_size_tier",
     "derive_confidence_level",
