@@ -45,7 +45,7 @@ class TrustGateService:
                     reason="Customer marked FATIGUED due to excessive recent payment failures",
                     details={"customer_id": customer.id, "failed_count": customer.failed_transactions},
                 )
-            if customer.failed_transactions >= 5 and customer.successful_transactions == 0:
+            if (customer.failed_transactions or 0) >= 5 and (customer.successful_transactions or 0) == 0:
                 return TrustGateResult(
                     passed=False,
                     suspicious_pattern_detected=True,

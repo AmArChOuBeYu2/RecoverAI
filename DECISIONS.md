@@ -499,6 +499,19 @@ $$\text{Economic Strategy Value Score} = \text{Expected Recovered Value} \times 
 
 **Rationale:** Preserves exact evidence provenance, guarantees reproducible outcome attribution, and closes the feedback loop to continuously optimize strategy ranking.
 
+---
+
+### DEC-039: Read-Only Policy Simulation Engine & Evaluation Endpoints
+
+**Decision:** In Milestone 16:
+1. **Read-Only Invariant**: `PolicySimulator` runs side-by-side scenario evaluations over target transaction sets without issuing Razorpay API calls or mutating live case/transaction states.
+2. **Policy Baseline vs Optimized Evaluation**: Compares `current_baseline` (naive payment link retry without policy bounds) against `recoverai_optimized` (4D segment-aware strategy synthesis, empirical Wilson scoring, and PolicyEngine safety rules).
+3. **Data Classification**: All simulation results and persisted `PolicySimulation` records are strictly labeled `simulation_mode = DataCategory.PROJECTED.value` (`PROJECTED`).
+4. **REST API**: Exposes `POST /api/simulator/run`, `GET /api/simulator/results`, and `GET /api/simulator/compare` for programmatic execution and side-by-side reporting.
+
+**Rationale:** Enables safe, non-disruptive policy evaluation and ROI projection across large transaction batches without impacting live recovery pipelines or financial integrations.
+
+
 
 
 
