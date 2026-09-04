@@ -1,7 +1,7 @@
 """
 Recovery Intelligence API Routes for RecoverAI
 Provides endpoints for portfolio revenue-at-risk analysis, strategy comparison & Wilson rankings,
-explainable recoverability scoring, and hierarchical evidence traces.
+explainable recoverability scoring, and hierarchical evidence traces with source provenance tracking.
 """
 
 import json
@@ -65,7 +65,7 @@ def list_segment_profiles(db: Session = Depends(get_db)):
         "top_segments": metrics["top_opportunity_segments"],
     }
 
-@router.get("/strategies/compare", summary="Compare candidate strategies using Wilson lower bounds")
+@router.get("/strategies/compare", summary="Compare candidate strategies using Wilson lower bounds and Economic Strategy Value")
 def compare_strategies(
     failure_category: str = Query("AUTHENTICATION_FAILURE"),
     payment_method: Optional[str] = Query("card"),

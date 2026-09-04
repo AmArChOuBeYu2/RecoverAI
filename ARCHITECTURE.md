@@ -311,33 +311,41 @@ The Segmentation Engine groups transactions deterministically:
 - Fallback hierarchy for sparse segments (<10 txns): 4D segment → 3D aggregate (`failure_category × payment_method × amount_range`) → failure category baseline.
 
 ## Strategy Engine
-Strategy selection operates on a hybrid AI/observed data model with **small-sample protection**:
+Strategy selection operates on a deterministic statistical/economic data model with **small-sample protection**:
 
-1. Retrieve historical strategy performance for this segment.
-2. AI analyzes payment context and recommends a strategy.
-3. **Apply small-sample protection** before comparing strategies.
-4. Compare AI recommendation against observed performance data.
-5. Select best strategy based on evidence quality.
-6. Present competing strategies with performance comparison and evidence quality.
+1. Retrieve historical strategy performance for this 4D segment (`failure_category × payment_method × amount_range × customer_type`).
+2. **Statistical Confidence**: Calculate Wilson score lower bound ($95\%$ CI) to penalize small-sample noise.
+3. **Economic Strategy Value**: Calculate expected monetary recovery value ($\text{Wilson LB} \times \text{avg\_transaction\_amount\_paise} \times \text{burden\_penalty}$).
+4. Compare strategies balancing statistical probability and economic value.
+5. If evidence is insufficient ($<10$ attempts): cascade through 4D $\to$ 3D $\to$ Category Baseline $\to$ Cold-Start `BASELINE_RECOMMENDATION`.
+6. Present competing strategies with complete evidence trace, category, and provenance attributes.
 
-### Small-Sample Protection
+### Small-Sample Protection & Economic Optimization
 
-Raw recovery rates on tiny samples are unreliable. A 1/1 = 100% rate must NOT beat a 50/200 = 25% rate automatically.
+Raw conversion rates on tiny samples are unreliable. A 1/1 = 100% rate MUST NOT beat a 40/150 = 26.7% rate automatically.
 
 **Thresholds:**
 | Sample Size | Confidence Level | Behavior |
 |:---|:---|:---|
-| < 10 attempts | `INSUFFICIENT` | Do not use this strategy's observed rate. Fall back to broader segment or AI recommendation. |
-| 10–30 attempts | `LOW` | Use observed rate but flag uncertainty. Apply conservative lower-bound estimate. |
-| 31–100 attempts | `MEDIUM` | Use observed rate. Weight against AI recommendation. |
-| > 100 attempts | `HIGH` | Prefer observed rate over AI recommendation. |
+| < 10 attempts | `INSUFFICIENT` | Do not use this segment's rate alone. Fall back to broader 3D/category baseline. Label cold start as `BASELINE_RECOMMENDATION`. |
+| 10–30 attempts | `LOW` | Use conservative Wilson lower-bound estimate. Apply sample uncertainty weight. |
+| 31–100 attempts | `MEDIUM` | Use observed rate & Wilson LB. |
+| > 100 attempts | `HIGH` | High evidence confidence. Primary data-driven precedence. |
 
-**Conservative estimate:** When sample is small, use the Wilson score interval lower bound instead of raw `successes / attempts`. This penalizes small samples appropriately.
+**Economic Strategy Value Formula:**
+$$\text{Expected Recovered Paise Per Attempt} = \text{round}(\text{Wilson LB} \times \text{avg\_transaction\_amount\_paise})$$
+$$\text{Economic Strategy Value Score} = \text{Expected Recovered Paise Per Attempt} \times \text{Burden Penalty Factor} \times \text{Tier Weight}$$
 
-**Fallback chain when evidence is insufficient:**
-1. Broader segment statistics (same `failure_category`, any `payment_method`/`amount_range`)
-2. Global strategy statistics (across all segments)
-3. Deterministic baseline strategy (PAYMENT_LINK for auth failures, RETRY for gateway errors)
+### Evidence Category & Provenance Model
+To prevent synthetic statistics from being mistaken for real merchant history:
+- **`evidence_category`**: `OBSERVED`, `VERIFIED`, `SIMULATED`, `PROJECTED`
+- **`evidence_provenance`**: `SYNTHETIC`, `RAZORPAY_TEST_MODE`, `RAZORPAY_LIVE_MODE`, `SIMULATION_ENGINE`, `PROJECTED_MODEL`
+
+### Cold-Start Baseline Semantics
+When historical evidence is `<10` attempts across all fallback levels:
+- Recommendation is explicitly labeled: `recommendation_type = "BASELINE_RECOMMENDATION"`.
+- `evidence_status = "INSUFFICIENT_EVIDENCE"`, `strategy_source = "DETERMINISTIC_BASELINE"`.
+- Cold-start baselines remain 100% subject to Policy Engine rules, Trust Gate, Action Authorization Guard, and human review.
 4. HUMAN_REVIEW if all else fails
 
 **Every recommendation exposes:**

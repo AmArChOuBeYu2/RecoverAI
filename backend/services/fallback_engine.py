@@ -2,13 +2,13 @@
 Hierarchical Fallback Engine for RecoverAI
 Executes the approved fallback hierarchy when 4D canonical segment evidence is insufficient (<10 txns):
 4D Canonical -> 3D Aggregate -> Failure Category Baseline -> Global Safe Default / Insufficient Evidence.
-Generates structured, step-by-step EvidenceTrace records.
+Generates structured, step-by-step EvidenceTrace records with cold-start baseline labels.
 """
 
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from backend.services.strategy_aggregator import StrategyAggregator
-from backend.models.enums import StrategyType, FailureCategory, ConfidenceLevel
+from backend.models.enums import StrategyType, FailureCategory, ConfidenceLevel, DataCategory, EvidenceProvenance, RecommendationType
 
 DEFAULT_SAFE_STRATEGIES = {
     FailureCategory.AUTHENTICATION_FAILURE.value: StrategyType.PAYMENT_LINK.value,
@@ -36,7 +36,7 @@ class FallbackEngine:
     ) -> Dict[str, Any]:
         """
         Evaluate strategy evidence through the 4-level fallback hierarchy.
-        Returns aggregate stats plus evidence trace.
+        Returns aggregate stats plus evidence trace with cold-start baseline semantics.
         """
         method_str = payment_method.lower() if payment_method else "any"
         cust_str = customer_type.lower() if customer_type else "any"
@@ -66,6 +66,9 @@ class FallbackEngine:
                     "fallback_occurred": False,
                     "fallback_reason": None,
                     "effective_segment_name": canonical_4d_name,
+                    "recommendation_type": RecommendationType.OPTIMIZED_RECOMMENDATION.value,
+                    "evidence_status": "SUFFICIENT_EVIDENCE",
+                    "strategy_source": "CANONICAL_4D_EVIDENCE",
                     "trace_steps": trace_steps,
                 }
             }
@@ -98,6 +101,9 @@ class FallbackEngine:
                     "fallback_occurred": True,
                     "fallback_reason": f"4D sample size ({l1_stats['attempt_count']}) < threshold ({min_sample_size})",
                     "effective_segment_name": aggregate_3d_prefix + "all",
+                    "recommendation_type": RecommendationType.OPTIMIZED_RECOMMENDATION.value,
+                    "evidence_status": "SUFFICIENT_EVIDENCE",
+                    "strategy_source": "AGGREGATE_3D_EVIDENCE",
                     "trace_steps": trace_steps,
                 }
             }
@@ -130,11 +136,14 @@ class FallbackEngine:
                     "fallback_occurred": True,
                     "fallback_reason": f"3D aggregate sample size ({l2_stats['attempt_count']}) < threshold ({min_sample_size})",
                     "effective_segment_name": failure_category.lower() + "_baseline",
+                    "recommendation_type": RecommendationType.OPTIMIZED_RECOMMENDATION.value,
+                    "evidence_status": "SUFFICIENT_EVIDENCE",
+                    "strategy_source": "CATEGORY_BASELINE_EVIDENCE",
                     "trace_steps": trace_steps,
                 }
             }
 
-        # Level 4: Global Safe Default / Insufficient Evidence
+        # Level 4: Cold-Start Baseline / Insufficient Evidence
         safe_strategy = DEFAULT_SAFE_STRATEGIES.get(failure_category, StrategyType.PAYMENT_LINK.value)
         l4_stats = {
             "segment_name": canonical_4d_name,
@@ -142,11 +151,16 @@ class FallbackEngine:
             "attempt_count": l1_stats["attempt_count"],
             "success_count": l1_stats["success_count"],
             "total_recovered_paise": l1_stats["total_recovered_paise"],
+            "avg_transaction_amount_paise": 100000,
+            "avg_recovered_paise_per_attempt": 0.0,
+            "expected_recovered_paise_per_attempt": 0,
             "recovery_rate": l1_stats["recovery_rate"],
             "wilson_lower_bound": l1_stats["wilson_lower_bound"],
             "sample_size_tier": ConfidenceLevel.INSUFFICIENT.value,
             "confidence_level": ConfidenceLevel.INSUFFICIENT.value,
             "sample_size_sufficient": False,
+            "evidence_category": DataCategory.OBSERVED.value,
+            "evidence_provenance": EvidenceProvenance.SYNTHETIC.value,
             "evidence_source": "GLOBAL_SAFE_DEFAULT",
             "is_safe_default": strategy_type == safe_strategy,
         }
@@ -163,8 +177,11 @@ class FallbackEngine:
                 "requested_segment": canonical_4d_name,
                 "fallback_level": "GLOBAL_SAFE_DEFAULT",
                 "fallback_occurred": True,
-                "fallback_reason": f"Failure category baseline sample size ({l3_stats['attempt_count']}) < threshold ({min_sample_size})",
+                "fallback_reason": "No adequate historical evidence available; relying on deterministic baseline strategy.",
                 "effective_segment_name": "global_safe_default",
+                "recommendation_type": RecommendationType.BASELINE_RECOMMENDATION.value,
+                "evidence_status": "INSUFFICIENT_EVIDENCE",
+                "strategy_source": "DETERMINISTIC_BASELINE",
                 "trace_steps": trace_steps,
             }
         }

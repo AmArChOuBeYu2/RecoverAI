@@ -379,11 +379,36 @@ Classification:
 
 ---
 
-### DEC-026: Temporal Cutoff Filtering & Evidence Source Isolation
+---
 
-**Decision:** Strategy performance aggregation enforces a decision timestamp cutoff ($T_{\text{failed}} \le T_{\text{decision}}$) to prevent future holdout data leakage. Evidence sources (`OBSERVED`, `VERIFIED`, `SIMULATED`, `PROJECTED`) are tracked independently and never silently merged.
+### DEC-027: Economic Strategy Value Optimization (Monetary Recovery vs Conversion Rate)
 
-**Rationale:** Guarantees backtest validity, prevents temporal data contamination, and preserves strict boundaries between actual test-mode verified outcomes and synthetic simulation observations.
+**Decision:** Strategy evaluation optimizes Economic Strategy Value (expected recovered paise per attempt) alongside Statistical Confidence ($\text{Wilson LB}$).
+
+**Formula:**
+$$\text{Expected Recovered Value} = \text{round}(\text{Wilson LB} \times \text{avg\_transaction\_amount\_paise})$$
+$$\text{Economic Strategy Value Score} = \text{Expected Recovered Value} \times \text{Burden Factor} \times \text{Tier Weight}$$
+
+**Rationale:** Optimizing conversion rate alone misleads financial recovery: a $30\%$ recovery rate on ₹5,000 transactions produces $37.5\times$ more recovered revenue than a $40\%$ recovery rate on ₹100 transactions. Separating probability confidence from economic value allows RecoverAI to maximize recovered merchant revenue.
+
+---
+
+### DEC-028: Evidence Category and Provenance Separation
+
+**Decision:** Maintain two distinct metadata attributes on all evidence records:
+- `evidence_category`: `OBSERVED`, `VERIFIED`, `SIMULATED`, `PROJECTED`
+- `evidence_provenance`: `SYNTHETIC`, `RAZORPAY_TEST_MODE`, `RAZORPAY_LIVE_MODE`, `SIMULATION_ENGINE`, `PROJECTED_MODEL`
+
+**Rationale:** Prevents local synthetic dataset observations (`OBSERVED + SYNTHETIC`) from being mistaken for real merchant history or Razorpay API verified test outcomes (`VERIFIED + RAZORPAY_TEST_MODE`), preserving strict auditability and evidence integrity.
+
+---
+
+### DEC-029: Cold-Start Baseline Recommendation Semantics
+
+**Decision:** When historical evidence across fallback levels is `<10` attempts (`INSUFFICIENT` tier), strategy recommendations are explicitly labeled `recommendation_type = "BASELINE_RECOMMENDATION"`, `evidence_status = "INSUFFICIENT_EVIDENCE"`, and `strategy_source = "DETERMINISTIC_BASELINE"`.
+
+**Rationale:** Cold-start default strategies cannot claim to be "statistically optimized". Labeling them as deterministic baselines ensures operators understand that recommendations rely on safe default policies and remain 100% subject to Policy Engine rules, Trust Gate, and authorization checks.
+
 
 
 

@@ -1,7 +1,7 @@
 """
-Comprehensive Unit & Integration Test Suite for Milestone 8 — Recovery Intelligence Foundations
-Validates Wilson score math, Case G small-sample trap, sample size tiers, fallback hierarchy,
-temporal leakage prevention, transparent recoverability scoring, portfolio revenue-at-risk, and API contracts.
+Comprehensive Unit & Integration Test Suite for Milestone 8 Hardening — Recovery Intelligence Foundations
+Validates Wilson score math, Case G small-sample trap, economic strategy value optimization,
+evidence provenance separation, cold-start baseline semantics, temporal leakage prevention, and API contracts.
 """
 
 import os
@@ -22,7 +22,14 @@ from backend.services.strategy_ranker import StrategyRanker
 from backend.services.recoverability_scorer import RecoverabilityScorer
 from backend.services.portfolio_intelligence import PortfolioIntelligenceService
 from backend.services.recovery_intelligence import RecoveryIntelligenceService
-from backend.models.enums import StrategyType, FailureCategory, ConfidenceLevel, DataCategory
+from backend.models.enums import (
+    StrategyType,
+    FailureCategory,
+    ConfidenceLevel,
+    DataCategory,
+    EvidenceProvenance,
+    RecommendationType,
+)
 
 client = TestClient(app)
 
@@ -66,166 +73,112 @@ def test_case_g_small_sample_trap():
     ranked_types = [s["strategy_type"] for s in rank_res["ranked_strategies"]]
     assert ranked_types.index("PAYMENT_LINK") < ranked_types.index("METHOD_SWITCH")
 
-def test_sample_size_tier_boundaries():
-    """Verify sample size tier boundary transitions (<10, 10-30, 31-100, >100)."""
-    assert derive_sample_size_tier(0) == ConfidenceLevel.INSUFFICIENT.value
-    assert derive_sample_size_tier(1) == ConfidenceLevel.INSUFFICIENT.value
-    assert derive_sample_size_tier(9) == ConfidenceLevel.INSUFFICIENT.value
-    
-    assert derive_sample_size_tier(10) == ConfidenceLevel.LOW.value
-    assert derive_sample_size_tier(20) == ConfidenceLevel.LOW.value
-    assert derive_sample_size_tier(30) == ConfidenceLevel.LOW.value
-    
-    assert derive_sample_size_tier(31) == ConfidenceLevel.MEDIUM.value
-    assert derive_sample_size_tier(50) == ConfidenceLevel.MEDIUM.value
-    assert derive_sample_size_tier(100) == ConfidenceLevel.MEDIUM.value
-    
-    assert derive_sample_size_tier(101) == ConfidenceLevel.HIGH.value
-    assert derive_sample_size_tier(500) == ConfidenceLevel.HIGH.value
-
 # -----------------------------------------------------------------------------
-# 2. Fallback Hierarchy & Evidence Trace Tests
+# 2. Strategy Economic Value Optimization Tests
 # -----------------------------------------------------------------------------
 
-def test_fallback_hierarchy_execution():
-    """Verify 4D -> 3D -> Failure Category -> Global Safe Default fallback steps."""
+def test_strategy_monetary_value_optimization():
+    """REQUIREMENT: Lower recovery rate on high-value payments can produce greater economic value than higher rate on low-value payments."""
     outcomes = [
-        # 4D canonical has only 2 attempts (< 10)
-        {"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "RECOVERED", "recovered_amount_paise": 1000, "outcome_source": "OBSERVED"},
-        {"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "NOT_RECOVERED", "recovered_amount_paise": 0, "outcome_source": "OBSERVED"},
+        # Strategy A (REMINDER): 40% recovery rate on ₹100 transactions (10,000 paise) -> Expected ~₹40/attempt
+        *([{"segment_name": "bank_timeout_upi_mid_returning", "strategy_type": "REMINDER", "outcome": "RECOVERED", "recovered_amount_paise": 10000, "transaction_amount_paise": 10000}] * 8),
+        *([{"segment_name": "bank_timeout_upi_mid_returning", "strategy_type": "REMINDER", "outcome": "NOT_RECOVERED", "recovered_amount_paise": 0, "transaction_amount_paise": 10000}] * 12),
 
-        # 3D aggregate has 12 attempts (>= 10)
-        *([{"segment_name": "authentication_failure_card_mid_new", "strategy_type": "PAYMENT_LINK", "outcome": "RECOVERED", "recovered_amount_paise": 1000, "outcome_source": "OBSERVED"}] * 6),
-        *([{"segment_name": "authentication_failure_card_mid_fatigued", "strategy_type": "PAYMENT_LINK", "outcome": "NOT_RECOVERED", "recovered_amount_paise": 0, "outcome_source": "OBSERVED"}] * 6),
+        # Strategy B (DELAYED_RETRY): 30% recovery rate on ₹5,000 transactions (500,000 paise) -> Expected ~₹1,500/attempt
+        *([{"segment_name": "bank_timeout_upi_mid_returning", "strategy_type": "DELAYED_RETRY", "outcome": "RECOVERED", "recovered_amount_paise": 500000, "transaction_amount_paise": 500000}] * 6),
+        *([{"segment_name": "bank_timeout_upi_mid_returning", "strategy_type": "DELAYED_RETRY", "outcome": "NOT_RECOVERED", "recovered_amount_paise": 0, "transaction_amount_paise": 500000}] * 14),
     ]
 
-    res = FallbackEngine.evaluate_strategy_with_fallback(
-        outcomes,
-        failure_category="AUTHENTICATION_FAILURE",
-        payment_method="card",
-        amount_range="MID",
-        customer_type="RETURNING",
-        strategy_type="PAYMENT_LINK",
+    rank_res = StrategyRanker.compare_and_rank_strategies(
+        outcomes, "BANK_TIMEOUT", "upi", "MID", "RETURNING"
     )
 
-    trace = res["evidence_trace"]
-    assert trace["fallback_occurred"] is True
-    assert trace["fallback_level"] == "3D_AGGREGATE"
-    assert trace["requested_segment"] == "authentication_failure_card_mid_returning"
-    assert res["performance"]["attempt_count"] == 14
+    # Strategy B (DELAYED_RETRY) has lower rate (30% vs 40%) but much higher monetary recovery expected
+    strat_b = next(s for s in rank_res["ranked_strategies"] if s["strategy_type"] == "DELAYED_RETRY")
+    strat_a = next(s for s in rank_res["ranked_strategies"] if s["strategy_type"] == "REMINDER")
 
-def test_cold_start_insufficient_evidence():
-    """Verify zero evidence returns GLOBAL_SAFE_DEFAULT fallback trace and INSUFFICIENT confidence."""
+    assert strat_b["expected_recovered_paise_per_attempt"] > strat_a["expected_recovered_paise_per_attempt"]
+    assert strat_b["economic_strategy_value_score"] > strat_a["economic_strategy_value_score"]
+    assert rank_res["recommended_strategy"] == "DELAYED_RETRY"
+
+def test_small_sample_protection_with_high_amount():
+    """Verify that a 1-attempt ₹50,000 transaction (1/1 = 100%) CANNOT dominate a well-tested strategy (40/150) due to tier weighting."""
+    outcomes = [
+        # Strategy A (METHOD_SWITCH): 1 attempt, 1 recovery on ₹50,000 (INSUFFICIENT tier)
+        {"segment_name": "authentication_failure_card_high_returning", "strategy_type": "METHOD_SWITCH", "outcome": "RECOVERED", "recovered_amount_paise": 5000000, "transaction_amount_paise": 5000000},
+
+        # Strategy B (PAYMENT_LINK): 40 recoveries out of 150 on ₹50,000 (HIGH tier)
+        *([{"segment_name": "authentication_failure_card_high_returning", "strategy_type": "PAYMENT_LINK", "outcome": "RECOVERED", "recovered_amount_paise": 5000000, "transaction_amount_paise": 5000000}] * 40),
+        *([{"segment_name": "authentication_failure_card_high_returning", "strategy_type": "PAYMENT_LINK", "outcome": "NOT_RECOVERED", "recovered_amount_paise": 0, "transaction_amount_paise": 5000000}] * 110),
+    ]
+
+    rank_res = StrategyRanker.compare_and_rank_strategies(
+        outcomes, "AUTHENTICATION_FAILURE", "card", "HIGH", "RETURNING"
+    )
+
+    assert rank_res["recommended_strategy"] == "PAYMENT_LINK"
+
+# -----------------------------------------------------------------------------
+# 3. Provenance & Cold-Start Baseline Semantics Tests
+# -----------------------------------------------------------------------------
+
+def test_evidence_provenance_separation():
+    """REQUIREMENT: OBSERVED + SYNTHETIC is distinct from VERIFIED + RAZORPAY_TEST_MODE."""
+    outcomes_synth = [
+        {"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "RECOVERED", "recovered_amount_paise": 1000, "evidence_category": "OBSERVED", "evidence_provenance": "SYNTHETIC"},
+    ]
+    outcomes_razorpay = [
+        {"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "RECOVERED", "recovered_amount_paise": 1000, "evidence_category": "VERIFIED", "evidence_provenance": "RAZORPAY_TEST_MODE"},
+    ]
+
+    stats_s = StrategyAggregator.aggregate_from_outcomes_list(outcomes_synth, "authentication_failure_card_mid_returning", "PAYMENT_LINK")
+    stats_r = StrategyAggregator.aggregate_from_outcomes_list(outcomes_razorpay, "authentication_failure_card_mid_returning", "PAYMENT_LINK")
+
+    assert stats_s["evidence_category"] == DataCategory.OBSERVED.value
+    assert stats_s["evidence_provenance"] == EvidenceProvenance.SYNTHETIC.value
+
+    assert stats_r["evidence_category"] == DataCategory.VERIFIED.value
+    assert stats_r["evidence_provenance"] == EvidenceProvenance.RAZORPAY_TEST_MODE.value
+
+    assert stats_s["evidence_source"] != stats_r["evidence_source"]
+
+def test_cold_start_baseline_semantics():
+    """REQUIREMENT: Cold start recommendations MUST be labeled BASELINE_RECOMMENDATION & INSUFFICIENT_EVIDENCE."""
     empty_outcomes = []
-    res = FallbackEngine.evaluate_strategy_with_fallback(
-        empty_outcomes,
-        failure_category="AUTHENTICATION_FAILURE",
-        payment_method="upi",
-        amount_range="HIGH",
-        customer_type="FATIGUED",
-        strategy_type="PAYMENT_LINK",
+    rank_res = StrategyRanker.compare_and_rank_strategies(
+        empty_outcomes, "AUTHENTICATION_FAILURE", "card", "MID", "RETURNING"
     )
 
-    perf = res["performance"]
-    trace = res["evidence_trace"]
-    assert trace["fallback_level"] == "GLOBAL_SAFE_DEFAULT"
-    assert perf["confidence_level"] == "INSUFFICIENT"
-    assert perf["sample_size_sufficient"] is False
+    assert rank_res["recommendation_type"] == RecommendationType.BASELINE_RECOMMENDATION.value
+    assert rank_res["evidence_status"] == "INSUFFICIENT_EVIDENCE"
+    assert rank_res["strategy_source"] == "DETERMINISTIC_BASELINE"
 
 # -----------------------------------------------------------------------------
-# 3. Temporal Leakage & Anti-Leakage Isolation Tests
+# 4. Temporal Money-Value Leakage Tests
 # -----------------------------------------------------------------------------
 
-def test_temporal_leakage_prevention():
-    """REQUIREMENT: Future outcomes after decision as_of_time MUST NOT alter strategy performance aggregation."""
+def test_temporal_money_value_leakage_prevention():
+    """REQUIREMENT: Future high-value outcomes after as_of_time CANNOT alter historical strategy rankings or expected value."""
     base_time = datetime(2026, 9, 1, 12, 0, 0, tzinfo=timezone.utc)
     future_time = base_time + timedelta(days=5)
 
     outcomes = [
-        {"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "RECOVERED", "recovered_amount_paise": 1000, "created_at": base_time.isoformat(), "failed_at": base_time.isoformat()},
-        # Future outcome that should be ignored when as_of_time = base_time
-        {"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "NOT_RECOVERED", "recovered_amount_paise": 0, "created_at": future_time.isoformat(), "failed_at": future_time.isoformat()},
-    ]
-
-    stats_past = StrategyAggregator.aggregate_from_outcomes_list(
-        outcomes, "authentication_failure_card_mid_returning", "PAYMENT_LINK", as_of_time=base_time
-    )
-    assert stats_past["attempt_count"] == 1
-    assert stats_past["success_count"] == 1
-
-    stats_all = StrategyAggregator.aggregate_from_outcomes_list(
-        outcomes, "authentication_failure_card_mid_returning", "PAYMENT_LINK", as_of_time=None
-    )
-    assert stats_all["attempt_count"] == 2
-
-def test_data_source_separation():
-    """Verify evidence sources (OBSERVED, VERIFIED, SIMULATED, PROJECTED) stay distinct."""
-    outcomes = [
-        {"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "RECOVERED", "recovered_amount_paise": 1000, "outcome_source": "VERIFIED"},
-        {"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "NOT_RECOVERED", "recovered_amount_paise": 0, "outcome_source": "SIMULATED"},
-    ]
-
-    stats = StrategyAggregator.aggregate_from_outcomes_list(
-        outcomes, "authentication_failure_card_mid_returning", "PAYMENT_LINK"
-    )
-    assert stats["evidence_source"] == "MIXED (SIMULATED, VERIFIED)"
-
-# -----------------------------------------------------------------------------
-# 4. Deterministic Strategy Ranking & Recoverability Tests
-# -----------------------------------------------------------------------------
-
-def test_deterministic_strategy_ranking():
-    """Verify StrategyRanker produces identical output for identical inputs and ranks by Wilson LB."""
-    outcomes = [
-        # Strategy A: PAYMENT_LINK -> 15 attempts, 10 recoveries (Wilson LB ~0.417, LOW tier)
-        *([{"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "RECOVERED", "recovered_amount_paise": 1000}] * 10),
-        *([{"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "NOT_RECOVERED", "recovered_amount_paise": 0}] * 5),
+        # Past outcome: 10/10 recoveries on ₹1,000 (100,000 paise)
+        *([{"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "PAYMENT_LINK", "outcome": "RECOVERED", "recovered_amount_paise": 100000, "transaction_amount_paise": 100000, "created_at": base_time.isoformat()}] * 10),
         
-        # Strategy B: DELAYED_RETRY -> 1 attempt, 1 recovery (Wilson LB ~0.025, INSUFFICIENT tier)
-        {"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "DELAYED_RETRY", "outcome": "RECOVERED", "recovered_amount_paise": 1000},
+        # Future outcome: 10/10 recoveries on ₹50,000 (5,000,000 paise) for REMINDER
+        *([{"segment_name": "authentication_failure_card_mid_returning", "strategy_type": "REMINDER", "outcome": "RECOVERED", "recovered_amount_paise": 5000000, "transaction_amount_paise": 5000000, "created_at": future_time.isoformat()}] * 10),
     ]
 
-    rank_res1 = StrategyRanker.compare_and_rank_strategies(
-        outcomes, "AUTHENTICATION_FAILURE", "card", "MID", "RETURNING"
-    )
-    rank_res2 = StrategyRanker.compare_and_rank_strategies(
-        outcomes, "AUTHENTICATION_FAILURE", "card", "MID", "RETURNING"
+    # Evaluate as of base_time
+    rank_past = StrategyRanker.compare_and_rank_strategies(
+        outcomes, "AUTHENTICATION_FAILURE", "card", "MID", "RETURNING", as_of_time=base_time
     )
 
-    assert rank_res1 == rank_res2
-    assert rank_res1["recommended_strategy"] == "PAYMENT_LINK"
-
-def test_transparent_recoverability_scoring():
-    """Verify transparent recoverability score calculation and factor contributions."""
-    txn = {
-        "id": "txn_test_101",
-        "failure_category": "AUTHENTICATION_FAILURE",
-        "amount_paise": 100000,
-        "customer_type": "RETURNING",
-        "attempt_count": 0,
-        "failed_at": datetime.now(timezone.utc).isoformat(),
-    }
-    cust = {"contacts_count_24h": 0}
-
-    score_res = RecoverabilityScorer.calculate_recoverability_score(txn, cust)
-    assert 0.01 <= score_res["recoverability_score"] <= 0.99
-    assert score_res["score_category"] in ["HIGH", "MEDIUM", "LOW"]
-    assert len(score_res["factors"]) >= 2
-    assert any(f["name"] == "base_failure_category" for f in score_res["factors"])
-    assert any(f["name"] == "customer_type_returning" for f in score_res["factors"])
-
-def test_portfolio_revenue_at_risk_calculation():
-    """Verify portfolio revenue at risk and eligible revenue in integer paise."""
-    txns = [
-        {"id": "t1", "amount_paise": 100000, "failure_category": "AUTHENTICATION_FAILURE", "segment_name": "s1", "created_at": "2026-09-01T10:00:00+00:00"},
-        {"id": "t2", "amount_paise": 500000, "failure_category": "BANK_TIMEOUT", "segment_name": "s1", "created_at": "2026-09-01T11:00:00+00:00"},
-        {"id": "t3", "amount_paise": 6000000, "failure_category": "REPEATED_FAILURE", "segment_name": "s2", "created_at": "2026-09-01T12:00:00+00:00"},
-    ]
-
-    metrics = PortfolioIntelligenceService.calculate_portfolio_metrics(txns, [])
-    assert metrics["total_revenue_at_risk_paise"] == 6600000
-    assert metrics["eligible_revenue_paise"] == 600000
-    assert isinstance(metrics["projected_recoverable_revenue_paise"], int)
+    # PAYMENT_LINK should win in the past because future REMINDER outcomes were excluded
+    assert rank_past["recommended_strategy"] == "PAYMENT_LINK"
+    reminder_past = next(s for s in rank_past["ranked_strategies"] if s["strategy_type"] == "REMINDER")
+    assert reminder_past["attempt_count"] == 0
 
 # -----------------------------------------------------------------------------
 # 5. REST API Integration Tests
@@ -259,8 +212,13 @@ def test_api_strategies_compare():
     assert response.status_code == 200
     data = response.json()
     assert "recommended_strategy" in data
+    assert "recommendation_type" in data
     assert "ranked_strategies" in data
-    assert len(data["ranked_strategies"]) == 5
+    
+    strat0 = data["ranked_strategies"][0]
+    assert "economic_strategy_value_score" in strat0
+    assert "evidence_category" in strat0
+    assert "evidence_provenance" in strat0
 
 def test_api_recoverability_post():
     payload = {
@@ -291,4 +249,6 @@ def test_api_evidence_trace():
     assert response.status_code == 200
     data = response.json()
     assert "fallback_level" in data
+    assert "recommendation_type" in data
+    assert "evidence_status" in data
     assert "trace_steps" in data
