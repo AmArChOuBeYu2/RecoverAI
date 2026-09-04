@@ -27,6 +27,8 @@ from backend.services.segmentation import SegmentationService
 from backend.services.detection import DetectionEngine
 from backend.services.context_builder import ContextBuilder
 from backend.services.eligibility import EligibilityChecker, EligibilityResult
+from backend.services.diagnosis import DiagnosisService
+from backend.services.strategy_engine import StrategyEngine
 
 __all__ = [
     "sanitize_payload",
@@ -38,6 +40,8 @@ __all__ = [
     "ContextBuilder",
     "EligibilityChecker",
     "EligibilityResult",
+    "DiagnosisService",
+    "StrategyEngine",
     "calculate_wilson_lower_bound",
     "derive_sample_size_tier",
     "derive_confidence_level",

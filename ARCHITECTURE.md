@@ -341,12 +341,12 @@ To prevent synthetic statistics from being mistaken for real merchant history:
 - **`evidence_category`**: `OBSERVED`, `VERIFIED`, `SIMULATED`, `PROJECTED`
 - **`evidence_provenance`**: `SYNTHETIC`, `RAZORPAY_TEST_MODE`, `RAZORPAY_LIVE_MODE`, `SIMULATION_ENGINE`, `PROJECTED_MODEL`
 
-### Cold-Start Baseline Semantics
-When historical evidence is `<10` attempts across all fallback levels:
-- Recommendation is explicitly labeled: `recommendation_type = "BASELINE_RECOMMENDATION"`.
-- `evidence_status = "INSUFFICIENT_EVIDENCE"`, `strategy_source = "DETERMINISTIC_BASELINE"`.
-- Cold-start baselines remain 100% subject to Policy Engine rules, Trust Gate, Action Authorization Guard, and human review.
-4. HUMAN_REVIEW if all else fails
+### Deterministic Synthesis Rule (AI + Empirical Evidence)
+`StrategyEngine` synthesizes AI recommendations with empirical segment evidence using a strict deterministic rule:
+- **Rule 1 (Sufficient Sample Size $\ge 10$)**: Empirical winner from `StrategyRanker` (highest Economic Strategy Value score and Wilson lower bound) ALWAYS takes precedence over AI opinion.
+- **Rule 2 (Insufficient Sample Size $< 10$)**: Adopts valid AI recommendation (`AI_GUIDED_LOW_SAMPLE`) if non-null; otherwise falls back to `DETERMINISTIC_BASELINE`.
+- **Decision Record**: Persists `RecoveryDecision` containing `ai_diagnosis`, `ai_recommended_strategy`, `ai_confidence`, `selected_strategy`, `reasoning_summary`, `strategy_evidence`, `competing_strategies`, and `llm_provider`.
+- **State Transition**: Advances case status from `ELIGIBLE` $\to$ `STRATEGIES_EVALUATED`. No financial execution occurs at this stage.
 
 **Every recommendation exposes:**
 - Strategy name

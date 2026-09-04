@@ -409,7 +409,28 @@ $$\text{Economic Strategy Value Score} = \text{Expected Recovered Value} \times 
 
 **Rationale:** Cold-start default strategies cannot claim to be "statistically optimized". Labeling them as deterministic baselines ensures operators understand that recommendations rely on safe default policies and remain 100% subject to Policy Engine rules, Trust Gate, and authorization checks.
 
+---
 
+### DEC-030: Deterministic Synthesis of AI Diagnosis and Empirical Evidence
 
+**Decision:** `StrategyEngine` synthesizes AI recommendations with empirical segment evidence using a strict deterministic synthesis rule:
+1. **Sufficient Empirical Evidence ($\ge 10$ attempts)**: Empirical sample-protected winner from `StrategyRanker` (highest Economic Strategy Value Score and Wilson lower bound) ALWAYS takes precedence over AI opinion.
+2. **Insufficient Empirical Evidence ($< 10$ attempts)**: Adopts valid AI recommendation (`AI_GUIDED_LOW_SAMPLE`) if non-null and policy-valid; otherwise falls back to `DETERMINISTIC_BASELINE`.
 
+**Rationale:** Preserves the core invariant: **AI Recommends, Empirical Evidence Informs, Policy Decides, Code Authorizes**. LLM recommendations can guide cold-start scenarios but can never override observed sample-protected empirical data.
 
+---
+
+### DEC-031: Inferred Condition for Abandoned Checkouts
+
+**Decision:** Checkout abandonment detection scans for unhandled transactions in `CREATED` status with `0` payment attempts created $>15$ minutes prior to evaluation time. Detected cases are labeled `failure_category = "CHECKOUT_ABANDONMENT"` and logged with `inferred_condition = True`.
+
+**Rationale:** Razorpay API does not emit explicit "abandoned checkout" webhooks; checkout abandonment is an inferred state derived from pending transaction orders without payment attempts.
+
+---
+
+### DEC-032: RecoveryDecision Idempotency and Decision-Time Evidence Preservation
+
+**Decision:** Strategy evaluation via `POST /api/recovery/evaluate/{case_id}` or `StrategyEngine.evaluate_case_strategies` is database-enforced idempotent. If a `RecoveryDecision` already exists for an evaluated case and `force_reevaluate=False`, the engine returns the existing decision record without creating duplicate database entries or mutating stored decision-time evidence.
+
+**Rationale:** Preserves exact historical decision-time evidence (`strategy_evidence` and `competing_strategies`) for auditability, preventing future recovery outcomes from mutating historic decision records.

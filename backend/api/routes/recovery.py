@@ -107,3 +107,83 @@ def evaluate_case_eligibility(
     result = EligibilityChecker.evaluate_eligibility(db, case)
     db.commit()
     return result
+
+@router.post("/evaluate/{case_id}", response_model=Dict[str, Any])
+def evaluate_case_strategy(
+    case_id: str,
+    force_reevaluate: bool = Query(False, description="Force re-evaluation even if decision exists"),
+    db: Session = Depends(get_db),
+):
+    """
+    Run AI Diagnosis & Strategy Engine for an ELIGIBLE recovery case.
+    Synthesizes AI recommendation + empirical evidence, persists RecoveryDecision,
+    and advances state machine from ELIGIBLE -> STRATEGIES_EVALUATED.
+    """
+    from backend.services.strategy_engine import StrategyEngine
+    from backend.models.recovery_decision import RecoveryDecision
+    from backend.services.state_machine import InvalidStateTransitionError
+
+    case = db.query(RecoveryCase).filter_by(id=case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail=f"Recovery case '{case_id}' not found")
+
+    try:
+        decision = StrategyEngine.evaluate_case_strategies(
+            db=db,
+            case=case,
+            force_reevaluate=force_reevaluate,
+        )
+        db.commit()
+        return {
+            "case_id": case.id,
+            "status": case.status,
+            "decision_id": decision.id,
+            "selected_strategy": decision.selected_strategy,
+            "ai_recommended_strategy": decision.ai_recommended_strategy,
+            "ai_confidence": decision.ai_confidence,
+            "ai_diagnosis": decision.ai_diagnosis,
+            "reasoning_summary": decision.reasoning_summary,
+            "strategy_evidence": decision.strategy_evidence,
+            "competing_strategies": decision.competing_strategies,
+            "llm_provider": decision.llm_provider,
+            "created_at": decision.created_at.isoformat() if decision.created_at else None,
+        }
+    except InvalidStateTransitionError as e:
+        raise HTTPException(status_code=400, detail=f"Cannot evaluate strategy for case '{case_id}' in status '{case.status}'. Case must be in ELIGIBLE state.")
+
+@router.get("/decisions/{case_id}", response_model=Dict[str, Any])
+def get_case_decision(
+    case_id: str,
+    db: Session = Depends(get_db),
+):
+    """Retrieve decision evidence details for a evaluated recovery case."""
+    from backend.models.recovery_decision import RecoveryDecision
+
+    case = db.query(RecoveryCase).filter_by(id=case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail=f"Recovery case '{case_id}' not found")
+
+    decision = (
+        db.query(RecoveryDecision)
+        .filter_by(recovery_case_id=case_id)
+        .order_by(RecoveryDecision.created_at.desc())
+        .first()
+    )
+    if not decision:
+        raise HTTPException(status_code=404, detail=f"No decision found for case '{case_id}'")
+
+    return {
+        "id": decision.id,
+        "case_id": case.id,
+        "case_status": case.status,
+        "selected_strategy": decision.selected_strategy,
+        "ai_recommended_strategy": decision.ai_recommended_strategy,
+        "ai_confidence": decision.ai_confidence,
+        "ai_diagnosis": decision.ai_diagnosis,
+        "reasoning_summary": decision.reasoning_summary,
+        "strategy_evidence": decision.strategy_evidence,
+        "competing_strategies": decision.competing_strategies,
+        "llm_provider": decision.llm_provider,
+        "created_at": decision.created_at.isoformat() if decision.created_at else None,
+    }
+
