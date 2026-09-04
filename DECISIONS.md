@@ -324,3 +324,19 @@ Classification:
    - Level 3: Escalation to human review
 4. UI Requirement: Expose evidence category, sample size, and confidence level alongside every strategy recommendation.
 
+---
+
+### DEC-021: Deterministic Policy Engine & Action Authorization Boundary
+
+**Decision:** Enforce absolute separation between AI recommendation and recovery action execution. AI recommends; Policy decides; Executor acts.
+
+**Rationale:** Financial recovery systems cannot delegate financial execution authority directly to LLM prompts. A deterministic policy layer guarantees safety, auditability, and compliance regardless of AI model hallucinations or confidence scores.
+
+**Key Architecture Rules:**
+1. **Zero LLM Authority**: Policy decisions are 100% code-driven and deterministic.
+2. **Explicit 14-Rule Precedence**: Rule evaluation follows a strict precedence hierarchy (Terminal State -> Already Recovered -> Trust Gate -> Unsupported Strategy -> Max Automated Amount -> High Value -> Low Confidence -> Max Retries -> Max Contacts 24h -> Cooldown -> Contact Hours -> Active Link -> Strategy Constraints -> Approval).
+3. **Structured Decisions**: Evaluates to `APPROVE`, `DENY`, or `ESCALATE` with granular explanations for dashboard rendering.
+4. **Action Authorization Guard**: `ActionAuthorizationService` prevents financial action execution unless decision is `APPROVE` and `can_execute_action is True`. `DENY` and `ESCALATE` strictly block execution.
+5. **Policy Versioning**: Every decision is stamped with `policy_version = "v1.0"` for simulator compatibility.
+
+

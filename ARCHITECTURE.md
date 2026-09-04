@@ -527,3 +527,48 @@ Raw Request Body -> HMAC SHA-256 Signature Verification -> DB-Enforced Event Ide
 - Raw webhook payloads storing cardholder data are sanitized prior to audit storage.
 - Credentials and secrets never appear in API responses, logs, or error tracebacks.
 
+---
+
+## Deterministic Policy Engine & Safety Controls (Milestone 6)
+
+RecoverAI enforces strict separation between AI recommendation and action execution:
+
+```ascii
+AI Strategy Recommendation
+            │
+            ▼
+     Trust Gate (Fraud / Velocity / Repeated Failure Check)
+            │
+            ▼
+   Policy Engine (Evaluates 14 Deterministic Safety Rules in Precedence Order)
+            │
+            ▼
+Action Authorization Boundary (Guards execution; only APPROVE authorizes action)
+            │
+            ▼
+     Action Executor (Executes Razorpay intervention if authorized)
+```
+
+### Rule Precedence Order
+1. `TERMINAL_STATE`: Reject if case is already terminal -> `DENY`
+2. `ALREADY_RECOVERED`: Reject if case is recovered -> `DENY`
+3. `TRUST_GATE_SUSPICIOUS`: Reject if Trust Gate flags suspicious velocity or customer fatigue -> `DENY`
+4. `UNSUPPORTED_STRATEGY`: Reject if strategy is not a valid `StrategyType` -> `DENY`
+5. `MAX_AUTOMATED_AMOUNT`: Reject if amount > `max_automated_action_amount_paise` (₹50,000) -> `DENY`
+6. `HIGH_VALUE`: Escalate if amount > `high_value_threshold_paise` (₹10,000) -> `ESCALATE`
+7. `LOW_CONFIDENCE`: Escalate if AI confidence < `min_ai_confidence` (0.60) -> `ESCALATE`
+8. `MAX_RETRIES`: Reject if attempt count >= `max_retries` (2) -> `DENY`
+9. `MAX_CONTACTS_24H`: Reject if customer 24h contacts >= `max_contacts_24h` (3) -> `DENY`
+10. `COOLDOWN_ACTIVE`: Reject if elapsed time < `cooldown_minutes` (60m) -> `DENY`
+11. `CONTACT_HOURS`: Reject if current time is outside 9 AM - 9 PM IST window -> `DENY`
+12. `ACTIVE_PAYMENT_LINK`: Reject duplicate link if an active link exists -> `DENY`
+13. `STRATEGY_CONSTRAINTS`: `HUMAN_REVIEW` -> `ESCALATE`; `NO_ACTION` -> `APPROVE`
+14. `POLICY_APPROVAL`: Approve if all rules pass cleanly -> `APPROVE`
+
+### Invariant Safeguards
+- **Zero LLM Authority**: Policy evaluation is 100% deterministic code. LLM output cannot bypass rules.
+- **Fail-Closed**: Any unhandled exception or missing context defaults to `DENY`/`ESCALATE`.
+- **Authorization Guard**: Financial actions execute ONLY when decision is `APPROVE` and `can_execute_action is True`.
+- **Policy Versioning**: Every decision records `policy_version = "v1.0"` for simulator auditability.
+
+
