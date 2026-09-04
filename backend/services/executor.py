@@ -11,6 +11,8 @@ import threading
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any, Tuple
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+
 
 from backend.config import settings
 from backend.models.recovery_case import RecoveryCase
@@ -171,6 +173,19 @@ class ActionExecutor:
                 else:
                     action = self._execute_payment_link(db, case, decision, ActionExecutionMode.SIMULATED.value, "SIMULATED")
 
+            except IntegrityError as ie:
+                db.rollback()
+                logger.warning(f"Database IntegrityError during action persistence for case '{case.id}': {ie}. Returning existing action.")
+                existing = (
+                    db.query(RecoveryAction)
+                    .filter_by(recovery_case_id=case.id)
+                    .filter(RecoveryAction.status != "FAILED")
+                    .first()
+                )
+                if existing:
+                    return existing
+                raise ActionExecutionError(f"Database integrity constraint violation: {ie}") from ie
+
             except Exception as exc:
                 # EXTERNAL / EXECUTION FAILURE SEMANTICS:
                 # Log execution failure, record failed action, do NOT advance state to AWAITING_VERIFICATION
@@ -178,6 +193,7 @@ class ActionExecutor:
                 failed_action = RecoveryAction(
                     recovery_case_id=case.id,
                     action_type=strategy_type,
+
                     execution_mode=execution_mode,
                     status="FAILED",
                     payload=sanitize_payload({"error": str(exc), "notification_mode": notification_mode}),

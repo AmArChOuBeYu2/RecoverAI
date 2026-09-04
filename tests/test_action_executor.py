@@ -8,7 +8,10 @@ and REST API execution endpoint.
 import pytest
 import uuid
 from unittest.mock import MagicMock, patch
-from datetime import datetime, timezone
+import threading
+from datetime import datetime, timezone, timedelta
+
+
 from fastapi.testclient import TestClient
 
 from backend.main import app
@@ -320,17 +323,20 @@ def test_concurrent_cap_enforcement(db_session):
 
         executor = ActionExecutor(payment_link_service=mock_service)
 
+        thread_db_lock = threading.Lock()
+
         def execute_case(item):
-            session = TestingSessionLocal()
-            try:
-                c_id, d_id = item
-                c = session.query(RecoveryCase).filter_by(id=c_id).first()
-                d = session.query(RecoveryDecision).filter_by(id=d_id).first()
-                res = executor.execute(session, c, d)
-                session.commit()
-                return res
-            finally:
-                session.close()
+            with thread_db_lock:
+                session = TestingSessionLocal()
+                try:
+                    c_id, d_id = item
+                    c = session.query(RecoveryCase).filter_by(id=c_id).first()
+                    d = session.query(RecoveryDecision).filter_by(id=d_id).first()
+                    res = executor.execute(session, c, d)
+                    session.commit()
+                    return res
+                finally:
+                    session.close()
 
         # Prepare 5 cases seeking execution concurrently
         items_ids = []
@@ -342,6 +348,7 @@ def test_concurrent_cap_enforcement(db_session):
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
             futures = [pool.submit(execute_case, item_id) for item_id in items_ids]
             results = [f.result() for f in concurrent.futures.as_completed(futures)]
+
 
 
         # Verify total REAL_TEST_MODE payment link actions in DB does not exceed cap (2)
@@ -399,4 +406,28 @@ def test_external_api_failure_semantics(db_session):
 
         # Verify state machine did NOT advance to AWAITING_VERIFICATION
         assert case.status != RecoveryCaseStatus.AWAITING_VERIFICATION.value
+
+def test_idempotency_allows_retry_when_previous_action_failed(db_session):
+    """Verify that a case with a previous FAILED action allows a fresh execution retry."""
+    case, decision = create_sample_case_with_decision(db_session, strategy_type=StrategyType.PAYMENT_LINK.value)
+
+    # Record a failed action from 2 hours ago (outside 60m cooldown)
+    failed_act = RecoveryAction(
+        recovery_case_id=case.id,
+        action_type=StrategyType.PAYMENT_LINK.value,
+        execution_mode=ActionExecutionMode.SIMULATED.value,
+        status="FAILED",
+        executed_at=datetime.now(timezone.utc) - timedelta(hours=2),
+    )
+
+    db_session.add(failed_act)
+    db_session.commit()
+
+    executor = ActionExecutor()
+    new_action = executor.execute(db_session, case, decision)
+
+    assert new_action.id != failed_act.id
+    assert new_action.status == "SENT"
+    assert case.status == RecoveryCaseStatus.AWAITING_VERIFICATION.value
+
 

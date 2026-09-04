@@ -474,5 +474,19 @@ $$\text{Economic Strategy Value Score} = \text{Expected Recovered Value} \times 
 
 **Rationale:** Guarantees concurrency safety, eliminates duplicate payment link creation on API retries, and preserves accurate audit records for API failures.
 
+---
+
+### DEC-037: Concurrency & Reconciliation Architecture
+
+**Decision:** In response to the Milestone 14 Final Concurrency & Reconciliation Audit:
+1. **Deployment Architecture Scope**: `_execution_lock` protects thread concurrency within a single application process (`uvicorn main:app --workers 1`), which is the documented single-process deployment model for this system.
+2. **Database-Enforced Uniqueness**: `RecoveryAction.razorpay_payment_link_id` is defined with `unique=True` at the database schema level. Any race condition attempting to insert a duplicate external payment link ID triggers a database `IntegrityError`, which `ActionExecutor` catches to roll back and return the existing active `RecoveryAction` idempotently.
+3. **Real Payment Link Cap Semantics**: `MAX_REAL_PAYMENT_LINKS` (default 10) counts all non-failed `REAL_TEST_MODE` actions (`status != "FAILED"` and `razorpay_payment_link_id != None`).
+4. **Idempotency with Failed Actions**: Actions with `status = "FAILED"` do NOT block future execution retries. When a case with a prior failed action is re-executed (after Policy Engine cooldown requirements are satisfied), a fresh execution attempt is permitted.
+5. **Remote Success / Local Failure Reconciliation Window**: In the event that a Razorpay Payment Link is created remotely but local DB insertion fails, all remote links carry `reference_id = case.id` and `notes = {"recovery_case_id": case.id}`. Inbound Razorpay webhooks (`payment_link.paid` or `payment.failed`) inspect these metadata fields to reconcile and attribute payments to the recovery case.
+
+**Rationale:** Establishes unambiguous deployment assumptions, database-level uniqueness guarantees, and explicit reconciliation rules for failure windows.
+
+
 
 

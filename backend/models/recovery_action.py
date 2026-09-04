@@ -31,8 +31,9 @@ class RecoveryAction(Base):
     )
     
     razorpay_payment_link_id: Mapped[str | None] = mapped_column(
-        String(255), nullable=True, index=True
+        String(255), nullable=True, unique=True, index=True
     )
+
     payment_link_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="PENDING", index=True)
     

@@ -261,8 +261,12 @@ class PolicyEngine:
         cooldown_active = False
         if case.actions:
             last_action = max(case.actions, key=lambda a: a.executed_at)
-            elapsed_sec = (now_utc - last_action.executed_at).total_seconds()
+            last_exec_time = last_action.executed_at
+            if last_exec_time and last_exec_time.tzinfo is None:
+                last_exec_time = last_exec_time.replace(tzinfo=timezone.utc)
+            elapsed_sec = (now_utc - last_exec_time).total_seconds()
             cooldown_sec = cfg.cooldown_minutes * 60
+
             if elapsed_sec < cooldown_sec:
                 cooldown_active = True
                 elapsed_min = int(elapsed_sec // 60)
