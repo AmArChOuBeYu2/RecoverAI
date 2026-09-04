@@ -353,5 +353,38 @@ Classification:
 2. Incorporating `customer_type` directly into the canonical segment key allows the strategy engine to track separate historical outcome distributions (attempt count, success count, recovery rate) per customer archetype (e.g., `auth_failure_card_mid_returning` vs `auth_failure_card_mid_fatigued`).
 3. For sparse combinations with sample sizes < 10 (`INSUFFICIENT` tier), the system relies on Wilson score lower bounds and falls back to 3D/2D aggregate levels (`failure_category × payment_method × amount_range` or broader failure category baselines), preserving statistical protection without losing archetype granularity.
 
+---
+
+### DEC-023: Wilson Score Lower Bound Ranking & Small-Sample Trap Protection
+
+**Decision:** Strategy ranking uses Wilson score lower confidence bounds ($95\%$ confidence level, $z=1.96$) alongside sample-size confidence tier precedence (`HIGH` > `MEDIUM` > `LOW` > `INSUFFICIENT`).
+
+**Rationale:** Naive conversion rates mislead optimization by ranking low-sample anomalies (e.g. $1/1 = 100\%$) above statistically sound strategies (e.g. $40/150 = 26.7\%$). Combining sample-size tier precedence and Wilson lower bounds guarantees that evidence-supported strategies are preferred over unvalidated anomalies.
+
+---
+
+### DEC-024: 4D → 3D → Baseline Fallback Hierarchy & Evidence Tracing
+
+**Decision:** When canonical 4D segment evidence is sparse ($<10$ attempts), Strategy Engine cascades through a 4-level fallback hierarchy: `4D Canonical` $\to$ `3D Aggregate` $\to$ `Failure Category Baseline` $\to$ `Global Safe Default`. Every evaluation generates a structured `EvidenceTrace` logging fallback steps, reasons, and effective segment name.
+
+**Rationale:** Guarantees zero system deadlocks or hallucinated confidence when encountering new or sparse customer/failure segments while maintaining complete auditability for human operators.
+
+---
+
+### DEC-025: Transparent Explainable Recoverability Propensity Scoring
+
+**Decision:** Recoverability propensity score $R \in [0.01, 0.99]$ is calculated using an explicit, deterministic factor model exposing positive and negative factor contributions (failure base rate, recency, customer type, attempt penalty, contact fatigue penalty, high amount penalty).
+
+**Rationale:** Opaque or black-box ML propensity models cannot be audited or explained to merchants. Exposing explicit factor contributions ensures total transparency and compliance with financial decisioning standards.
+
+---
+
+### DEC-026: Temporal Cutoff Filtering & Evidence Source Isolation
+
+**Decision:** Strategy performance aggregation enforces a decision timestamp cutoff ($T_{\text{failed}} \le T_{\text{decision}}$) to prevent future holdout data leakage. Evidence sources (`OBSERVED`, `VERIFIED`, `SIMULATED`, `PROJECTED`) are tracked independently and never silently merged.
+
+**Rationale:** Guarantees backtest validity, prevents temporal data contamination, and preserves strict boundaries between actual test-mode verified outcomes and synthetic simulation observations.
+
+
 
 
