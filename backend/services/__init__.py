@@ -30,6 +30,8 @@ from backend.services.eligibility import EligibilityChecker, EligibilityResult
 from backend.services.diagnosis import DiagnosisService
 from backend.services.strategy_engine import StrategyEngine
 from backend.services.strategy_optimizer import StrategyOptimizer
+from backend.services.executor import ActionExecutor, ActionExecutionError
+
 
 __all__ = [
     "sanitize_payload",
@@ -44,6 +46,8 @@ __all__ = [
     "DiagnosisService",
     "StrategyEngine",
     "StrategyOptimizer",
+    "ActionExecutor",
+    "ActionExecutionError",
     "calculate_wilson_lower_bound",
     "derive_sample_size_tier",
     "derive_confidence_level",
@@ -63,3 +67,4 @@ __all__ = [
     "ActionAuthorizationService",
     "ActionAuthorizationError",
 ]
+

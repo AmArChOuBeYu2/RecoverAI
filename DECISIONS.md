@@ -451,3 +451,16 @@ $$\text{Economic Strategy Value Score} = \text{Expected Recovered Value} \times 
 
 **Rationale:** Zero evidence represents a cold-start state requiring evidence-gathering or deterministic baseline fallbacks, not a failed strategy. Preserving `VERIFIED` and `RAZORPAY_TEST_MODE` metadata ensures test mode API outcomes are auditable and distinguishable from local synthetic or simulated dataset records.
 
+---
+
+### DEC-035: Action Executor Routing, Mode Cap Enforcement, and Authorization Invariant
+
+**Decision:** `ActionExecutor` executes policy-authorized recovery interventions (`PAYMENT_LINK`, `REMINDER`, `DELAYED_RETRY`, `ESCALATION`, `HUMAN_REVIEW`, `NO_ACTION`) adhering to strict invariants:
+1. **Action Authorization Boundary**: Execution is strictly rejected unless `PolicyEngine` evaluation returns `PolicyDecisionType.APPROVE` (`can_execute_action = True`). Non-approved decisions (`DENY`, `ESCALATE`) raise `ActionAuthorizationError`.
+2. **Cap Enforcement**: Bounded REAL Razorpay Payment Link creation (`MAX_REAL_PAYMENT_LINKS`). Once the cap is reached or if credentials are missing, payment link execution automatically falls back to `ActionExecutionMode.SIMULATED` with explicit labeling (`SIMULATED_PAYMENT_LINK`).
+3. **Integer-Paise Monetary Preservation**: All payment link payloads and action record quantities remain integer paise.
+4. **State Machine Invariants**: Valid state transitions follow `POLICY_APPROVED` $\rightarrow$ `ACTION_ATTEMPTED` $\rightarrow$ `AWAITING_VERIFICATION` (or `ESCALATED`).
+
+**Rationale:** Ensures financial actions are executed safely, within configurable API caps, without bypassing policy rules or Trust Gate safety checks.
+
+

@@ -44,6 +44,8 @@ class StrategyType(str, Enum):
     METHOD_SWITCH = "METHOD_SWITCH"
     NO_ACTION = "NO_ACTION"
     HUMAN_REVIEW = "HUMAN_REVIEW"
+    ESCALATION = "ESCALATION"
+
 
 class DataCategory(str, Enum):
     OBSERVED = "OBSERVED"

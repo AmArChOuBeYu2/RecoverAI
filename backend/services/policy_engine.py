@@ -323,15 +323,16 @@ class PolicyEngine:
         # ---------------------------------------------------------
         # PRECEDENCE 13: Strategy-Specific Constraints
         # ---------------------------------------------------------
-        if proposed_strategy == StrategyType.HUMAN_REVIEW.value:
+        if proposed_strategy in (StrategyType.HUMAN_REVIEW.value, StrategyType.ESCALATION.value):
             rule_human_review = RuleEvaluationDetail(
                 rule_name="STRATEGY_CONSTRAINTS",
                 passed=False,
                 current_value=proposed_strategy,
                 threshold_value="Automated strategy",
                 decision_impact="ESCALATE",
-                explanation="Strategy 'HUMAN_REVIEW' explicitly mandates human escalation",
+                explanation=f"Strategy '{proposed_strategy}' explicitly mandates human escalation",
             )
+
             rules_evaluated.append(rule_human_review)
             failed_rules.append(rule_human_review)
             return cls._build_result(cfg.policy_version, PolicyDecisionType.ESCALATE.value, proposed_strategy, rules_evaluated, failed_rules, rule_human_review.rule_name, case, db, persist_decision)

@@ -37,7 +37,12 @@ class StateMachineService:
             RecoveryCaseStatus.ESCALATED.value,
         },
         RecoveryCaseStatus.POLICY_APPROVED.value: {RecoveryCaseStatus.ACTION_ATTEMPTED.value},
-        RecoveryCaseStatus.ACTION_ATTEMPTED.value: {RecoveryCaseStatus.AWAITING_VERIFICATION.value},
+        RecoveryCaseStatus.ACTION_ATTEMPTED.value: {
+            RecoveryCaseStatus.AWAITING_VERIFICATION.value,
+            RecoveryCaseStatus.ESCALATED.value,
+        },
+
+
         RecoveryCaseStatus.AWAITING_VERIFICATION.value: {
             RecoveryCaseStatus.RECOVERED.value,
             RecoveryCaseStatus.UNRECOVERED.value,

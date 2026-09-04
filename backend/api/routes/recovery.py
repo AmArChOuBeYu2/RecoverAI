@@ -187,3 +187,95 @@ def get_case_decision(
         "created_at": decision.created_at.isoformat() if decision.created_at else None,
     }
 
+@router.post("/{case_id}/execute", response_model=Dict[str, Any])
+def execute_recovery_action(
+    case_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Execute an authorized recovery action for a recovery case.
+    Enforces Policy Engine approval, Trust Gate safety, execution limits,
+    state machine transitions, and audit trail records.
+    """
+    from backend.models.recovery_decision import RecoveryDecision
+    from backend.services.policy_engine import PolicyEngine
+    from backend.services.state_machine import StateMachineService, InvalidStateTransitionError
+    from backend.services.executor import ActionExecutor, ActionExecutionError
+    from backend.services.authorization import ActionAuthorizationError
+    from backend.models.enums import PolicyDecisionType
+
+    case = db.query(RecoveryCase).filter_by(id=case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail=f"Recovery case '{case_id}' not found")
+
+    decision = (
+        db.query(RecoveryDecision)
+        .filter_by(recovery_case_id=case_id)
+        .order_by(RecoveryDecision.created_at.desc())
+        .first()
+    )
+    if not decision:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Recovery case '{case_id}' has not been evaluated by strategy engine yet.",
+        )
+
+    # Evaluate policy if case is in STRATEGIES_EVALUATED state
+    if case.status == RecoveryCaseStatus.STRATEGIES_EVALUATED.value:
+        policy_result = PolicyEngine.evaluate(
+            case=case,
+            proposed_strategy=decision.selected_strategy,
+            ai_confidence=decision.ai_confidence,
+            db=db,
+            persist_decision=True,
+        )
+        if policy_result.decision == PolicyDecisionType.APPROVE.value:
+            StateMachineService.transition_to(
+                db, case, RecoveryCaseStatus.POLICY_APPROVED.value, actor="POLICY_ENGINE"
+            )
+        elif policy_result.decision == PolicyDecisionType.DENY.value:
+            StateMachineService.transition_to(
+                db, case, RecoveryCaseStatus.POLICY_BLOCKED.value, actor="POLICY_ENGINE", reason=policy_result.reason
+            )
+            db.commit()
+            raise HTTPException(
+                status_code=400,
+                detail=f"Action execution blocked by policy: {policy_result.reason}",
+            )
+        elif policy_result.decision == PolicyDecisionType.ESCALATE.value:
+            StateMachineService.transition_to(
+                db, case, RecoveryCaseStatus.ESCALATED.value, actor="POLICY_ENGINE", reason=policy_result.reason
+            )
+            db.commit()
+            raise HTTPException(
+                status_code=400,
+                detail=f"Action execution escalated by policy: {policy_result.reason}",
+            )
+
+    if case.status != RecoveryCaseStatus.POLICY_APPROVED.value:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot execute action for case '{case_id}' in status '{case.status}'. Case must be in POLICY_APPROVED state.",
+        )
+
+    try:
+        executor = ActionExecutor()
+        action = executor.execute(db, case, decision)
+        db.commit()
+        return {
+            "case_id": case.id,
+            "case_status": case.status,
+            "action_id": action.id,
+            "action_type": action.action_type,
+            "execution_mode": action.execution_mode,
+            "status": action.status,
+            "razorpay_payment_link_id": action.razorpay_payment_link_id,
+            "payment_link_url": action.payment_link_url,
+            "payload": action.payload,
+            "executed_at": action.executed_at.isoformat() if action.executed_at else None,
+        }
+    except (ActionAuthorizationError, ActionExecutionError, ValueError) as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
