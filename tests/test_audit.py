@@ -178,3 +178,100 @@ def test_webhook_idempotency_via_audit_event_id(db_session: Session):
             event_id=evt_id,
         )
     db_session.rollback()
+
+
+def test_actor_taxonomy_validation(db_session: Session):
+    """Test actor taxonomy enforcement and normalization."""
+    case = create_sample_case(db_session)
+
+    # Valid canonical actors
+    for actor in ["SYSTEM", "AI_AGENT", "POLICY_ENGINE", "ACTION_EXECUTOR", "VERIFICATION_SERVICE", "HUMAN_OPERATOR"]:
+        evt = AuditService.log_event(db_session, EVENT_TYPE_DETECTED, f"Event by {actor}", recovery_case_id=case.id, actor=actor)
+        assert evt.actor == actor
+
+    # Normalization of alias actors
+    evt_ai = AuditService.log_event(db_session, EVENT_TYPE_DETECTED, "AI event", recovery_case_id=case.id, actor="ai:openai")
+    assert evt_ai.actor == "AI_AGENT"
+
+    # Invalid actor string must raise ValueError
+    with pytest.raises(ValueError) as exc_info:
+        AuditService.log_event(db_session, EVENT_TYPE_DETECTED, "Invalid actor event", recovery_case_id=case.id, actor="UNAUTHORIZED_ROBOT")
+    assert "Invalid actor 'UNAUTHORIZED_ROBOT'" in str(exc_info.value)
+
+
+def test_timeline_ordering_deterministic_tie_breaker(db_session: Session):
+    """Test get_timeline_for_case uses created_at + id tie-breaker for deterministic ordering."""
+    case = create_sample_case(db_session)
+    fixed_now = datetime.now(timezone.utc)
+
+    # Create 3 events with identical created_at timestamp
+    e1 = AuditEvent(recovery_case_id=case.id, event_type="E1", actor="SYSTEM", description="First", created_at=fixed_now)
+    e2 = AuditEvent(recovery_case_id=case.id, event_type="E2", actor="SYSTEM", description="Second", created_at=fixed_now)
+    e3 = AuditEvent(recovery_case_id=case.id, event_type="E3", actor="SYSTEM", description="Third", created_at=fixed_now)
+
+    db_session.add_all([e1, e2, e3])
+    db_session.flush()
+
+    events = AuditService.get_events_for_case(db_session, case.id)
+    assert len(events) == 3
+    # IDs generated sequentially or sorted deterministically by id asc
+    expected_ids = sorted([e1.id, e2.id, e3.id])
+    actual_ids = [e.id for e in events]
+    assert actual_ids == expected_ids
+
+
+def test_sanitization_secrets_redacted(db_session: Session):
+    """Test AuditService redacts API keys, secrets, credentials, and tokens from details payload."""
+    case = create_sample_case(db_session)
+
+    evt = AuditService.log_event(
+        db=db_session,
+        event_type=EVENT_TYPE_DETECTED,
+        description="Sanitization test",
+        recovery_case_id=case.id,
+        actor="SYSTEM",
+        details={
+            "api_key": "secret_key_12345",
+            "authorization": "Bearer token_abc123",
+            "card_number": "4111111111111111",
+            "safe_metadata": "public_info",
+        },
+    )
+
+    assert evt.details["api_key"] == "[REDACTED]"
+    assert evt.details["authorization"] == "[REDACTED]"
+    assert evt.details["card_number"] == "[REDACTED]"
+    assert evt.details["safe_metadata"] == "public_info"
+
+
+def test_query_pagination_and_edge_cases(db_session: Session):
+    """Test querying audit events with pagination limits, offsets, and empty queries."""
+    case = create_sample_case(db_session)
+
+    for i in range(5):
+        AuditService.log_event(
+            db=db_session,
+            event_type=EVENT_TYPE_DETECTED,
+            description=f"Event {i}",
+            recovery_case_id=case.id,
+            actor="SYSTEM",
+        )
+
+    # Limit and offset test
+    page1 = AuditService.query_events(db_session, recovery_case_id=case.id, limit=2, offset=0)
+    page2 = AuditService.query_events(db_session, recovery_case_id=case.id, limit=2, offset=2)
+    assert len(page1) == 2
+    assert len(page2) == 2
+    assert page1[0].id != page2[0].id
+
+    # Non-existent query test
+    empty = AuditService.query_events(db_session, recovery_case_id="non_existent_case_123")
+    assert empty == []
+
+
+def test_append_only_immutability(db_session: Session):
+    """Verify AuditService API provides no update or deletion functionality."""
+    assert not hasattr(AuditService, "update_event")
+    assert not hasattr(AuditService, "delete_event")
+    assert not hasattr(AuditService, "delete_events")
+

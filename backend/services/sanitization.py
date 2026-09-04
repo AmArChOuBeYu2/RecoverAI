@@ -7,8 +7,10 @@ import copy
 from typing import Any, Dict
 
 SENSITIVE_KEYS = {
-    "card_number", "card", "cvv", "cvc", "password", "secret", 
-    "auth_code", "token", "key_secret", "razorpay_key_secret"
+    "card_number", "card", "cvv", "cvc", "password", "secret", "client_secret",
+    "auth_code", "token", "access_token", "refresh_token", "auth_token",
+    "key_secret", "razorpay_key_secret", "api_key", "apikey", "authorization",
+    "bearer", "private_key", "credential", "credentials"
 }
 
 def sanitize_payload(payload: Any) -> Any:
