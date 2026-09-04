@@ -463,4 +463,16 @@ $$\text{Economic Strategy Value Score} = \text{Expected Recovered Value} \times 
 
 **Rationale:** Ensures financial actions are executed safely, within configurable API caps, without bypassing policy rules or Trust Gate safety checks.
 
+---
+
+### DEC-036: Execution Integrity — Thread-Safe Cap Locking, Idempotency, and External Failure Semantics
+
+**Decision:** In response to the Milestone 14 Execution-Integrity Audit:
+1. **Thread-Safe Cap Enforcement**: `determine_execution_mode` and payment link creation execute under a thread-level mutex `_execution_lock`, guaranteeing atomic `count -> compare -> create` execution under high concurrency.
+2. **Database-Enforced Execution Idempotency**: If `ActionExecutor.execute` is invoked for a case where an active `RecoveryAction` already exists, the system returns the existing `RecoveryAction` record idempotently without making duplicate Razorpay API calls or persisting duplicate actions.
+3. **External API Failure Semantics**: If a Razorpay API call fails during REAL execution, `ActionExecutor` logs an `ACTION_EXECUTION_FAILED` audit event, records a `RecoveryAction` with `status = "FAILED"`, and raises `ActionExecutionError`. It does NOT produce a misleading `ACTION_EXECUTED` record or silently fall back to `SIMULATED` mode.
+
+**Rationale:** Guarantees concurrency safety, eliminates duplicate payment link creation on API retries, and preserves accurate audit records for API failures.
+
+
 

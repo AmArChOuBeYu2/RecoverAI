@@ -285,3 +285,118 @@ def test_api_execute_endpoint_nonexistent_case():
     res = client.post("/api/recovery/nonexistent_case_12345/execute")
     assert res.status_code == 404
     assert "not found" in res.json()["detail"]
+
+def test_concurrent_cap_enforcement(db_session):
+    """Test MAX_REAL_PAYMENT_LINKS enforcement is safe under concurrent execution."""
+    import concurrent.futures
+
+    with patch.object(settings, "MAX_REAL_PAYMENT_LINKS", 2), \
+         patch.object(settings, "RAZORPAY_KEY_ID", "rzp_test_key"), \
+         patch.object(settings, "RAZORPAY_KEY_SECRET", "rzp_test_secret"):
+
+        # Create 1 existing real payment link
+        c1, d1 = create_sample_case_with_decision(db_session)
+        act1 = RecoveryAction(
+            recovery_case_id=c1.id,
+            action_type=StrategyType.PAYMENT_LINK.value,
+            execution_mode=ActionExecutionMode.REAL_TEST_MODE.value,
+            razorpay_payment_link_id="plink_existing_1",
+            status="SENT",
+        )
+        db_session.add(act1)
+        db_session.commit()
+
+        # Mock payment link service for real creation
+        mock_service = MagicMock()
+        mock_service.create_payment_link.side_effect = lambda req: RazorpayPaymentLinkResponse(
+            id=f"plink_concurrent_{uuid.uuid4().hex[:6]}",
+            amount=req.amount_paise,
+            currency="INR",
+            status="created",
+            short_url="https://rzp.io/i/concurrent",
+            reference_id=req.reference_id,
+            created_at=int(datetime.now(timezone.utc).timestamp()),
+        )
+
+        executor = ActionExecutor(payment_link_service=mock_service)
+
+        def execute_case(item):
+            session = TestingSessionLocal()
+            try:
+                c_id, d_id = item
+                c = session.query(RecoveryCase).filter_by(id=c_id).first()
+                d = session.query(RecoveryDecision).filter_by(id=d_id).first()
+                res = executor.execute(session, c, d)
+                session.commit()
+                return res
+            finally:
+                session.close()
+
+        # Prepare 5 cases seeking execution concurrently
+        items_ids = []
+        for _ in range(5):
+            c, d = create_sample_case_with_decision(db_session)
+            items_ids.append((c.id, d.id))
+        db_session.commit()
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
+            futures = [pool.submit(execute_case, item_id) for item_id in items_ids]
+            results = [f.result() for f in concurrent.futures.as_completed(futures)]
+
+
+        # Verify total REAL_TEST_MODE payment link actions in DB does not exceed cap (2)
+        real_count = db_session.query(RecoveryAction).filter(
+            RecoveryAction.execution_mode == ActionExecutionMode.REAL_TEST_MODE.value,
+            RecoveryAction.status != "FAILED"
+        ).count()
+        assert real_count <= 2
+
+def test_execution_idempotency_repeated_requests(db_session):
+    """Test repeated execution of the same case returns the same action without creating duplicate links."""
+    case, decision = create_sample_case_with_decision(db_session, strategy_type=StrategyType.PAYMENT_LINK.value)
+    executor = ActionExecutor()
+
+    action1 = executor.execute(db_session, case, decision)
+    db_session.commit()
+
+    # Second identical execution call
+    action2 = executor.execute(db_session, case, decision)
+
+    assert action1.id == action2.id
+    assert action1.razorpay_payment_link_id == action2.razorpay_payment_link_id
+    assert db_session.query(RecoveryAction).filter_by(recovery_case_id=case.id).count() == 1
+
+def test_external_api_failure_semantics(db_session):
+    """Test Razorpay API error logs ACTION_EXECUTION_FAILED and sets status='FAILED' without advancing state machine."""
+    from backend.integrations.razorpay.exceptions import RazorpayInvalidRequestError
+
+    case, decision = create_sample_case_with_decision(db_session, strategy_type=StrategyType.PAYMENT_LINK.value)
+
+    mock_service = MagicMock()
+    mock_service.create_payment_link.side_effect = RazorpayInvalidRequestError("Invalid customer email")
+
+    with patch.object(settings, "RAZORPAY_KEY_ID", "rzp_test_key"), \
+         patch.object(settings, "RAZORPAY_KEY_SECRET", "rzp_test_secret"):
+
+        executor = ActionExecutor(payment_link_service=mock_service)
+
+        with pytest.raises(ActionExecutionError) as exc_info:
+            executor.execute(db_session, case, decision)
+
+        assert "Invalid customer email" in str(exc_info.value)
+
+        # Verify failed action record created with status FAILED
+        failed_act = db_session.query(RecoveryAction).filter_by(recovery_case_id=case.id, status="FAILED").first()
+        assert failed_act is not None
+        assert failed_act.execution_mode == ActionExecutionMode.REAL_TEST_MODE.value
+
+        # Verify ACTION_EXECUTION_FAILED audit event logged
+        failed_audit = db_session.query(AuditEvent).filter_by(
+            recovery_case_id=case.id, event_type="ACTION_EXECUTION_FAILED"
+        ).first()
+        assert failed_audit is not None
+        assert "Invalid customer email" in failed_audit.description
+
+        # Verify state machine did NOT advance to AWAITING_VERIFICATION
+        assert case.status != RecoveryCaseStatus.AWAITING_VERIFICATION.value
+
