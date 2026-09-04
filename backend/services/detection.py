@@ -96,7 +96,7 @@ class DetectionEngine:
     ) -> List[RecoveryCase]:
         """
         Scan database for Transactions in CREATED status (zero payment attempts) older than min_age_minutes.
-        Infers CUSTOMER_ABANDONMENT condition, initializes RecoveryCase (status=DETECTED),
+        Infers CHECKOUT_ABANDONMENT condition, initializes RecoveryCase (status=DETECTED),
         logs audit event with inferred_condition=True, and advances to SEGMENTED.
         """
         now = as_of_time or datetime.now(timezone.utc)
@@ -121,8 +121,8 @@ class DetectionEngine:
             if txn_created.tzinfo is None:
                 txn_created = txn_created.replace(tzinfo=timezone.utc)
 
-            # Strict age check: transaction age must be > min_age_minutes
-            if txn_created > cutoff:
+            # Strict age check: transaction age must be > min_age_minutes (age > 15m)
+            if txn_created >= cutoff:
                 continue
 
             # Set failure_category to CHECKOUT_ABANDONMENT

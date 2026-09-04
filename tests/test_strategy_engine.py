@@ -20,6 +20,7 @@ from backend.services.eligibility import EligibilityChecker
 from backend.services.segmentation import SegmentationService
 from backend.services.diagnosis import DiagnosisService
 from backend.services.strategy_engine import StrategyEngine
+from backend.services.fallback_engine import FallbackEngine
 from backend.models.recovery_case import RecoveryCase
 from backend.models.transaction import Transaction
 from backend.models.customer import Customer
@@ -306,3 +307,96 @@ def test_api_recovery_evaluate(db_session: Session):
     dec_data = dec_resp.json()
     assert dec_data["case_id"] == c_id
     assert dec_data["selected_strategy"] == data["selected_strategy"]
+
+# -----------------------------------------------------------------------------
+# 6. Verification Audit Regression Tests (Milestone 12 Integrity)
+# -----------------------------------------------------------------------------
+
+def test_failure_category_canonicality_across_components():
+    """Verify CHECKOUT_ABANDONMENT is the single canonical failure category enum value."""
+    assert FailureCategory.CHECKOUT_ABANDONMENT.value == "CHECKOUT_ABANDONMENT"
+    fallback_strat = FallbackEngine.evaluate_strategy_with_fallback(
+        outcomes=[],
+        failure_category="CHECKOUT_ABANDONMENT",
+        payment_method="card",
+        amount_range="MID",
+        customer_type="NEW",
+        strategy_type="PAYMENT_LINK",
+    )
+    assert fallback_strat is not None
+
+def test_authoritative_failure_category_preserved_over_llm_proposal(db_session: Session):
+    """Verify authoritative transaction failure category is preserved even if LLM proposes a different category."""
+    now = datetime(2026, 9, 5, 12, 0, 0, tzinfo=timezone.utc)
+    cust = Customer(email="auth_fact@example.com", customer_type="NEW")
+    db_session.add(cust)
+    db_session.flush()
+
+    txn = Transaction(razorpay_payment_id="pay_auth_fact", customer_id=cust.id, amount_paise=100000, status="FAILED", failure_category=FailureCategory.BANK_TIMEOUT.value, payment_method="upi", created_at=now)
+    db_session.add(txn)
+    db_session.flush()
+
+    case = RecoveryCase(transaction_id=txn.id, customer_id=cust.id, status=RecoveryCaseStatus.DETECTED.value, attempt_count=0)
+    db_session.add(case)
+    db_session.flush()
+    SegmentationService.assign_segment_to_case(db_session, case)
+    EligibilityChecker.evaluate_eligibility(db_session, case, as_of_time=now)
+
+    # LLM proposes AUTHENTICATION_FAILURE (conflicting with authoritative BANK_TIMEOUT)
+    mock_router = LLMRouter(providers=[CustomMockLLMProvider("PAYMENT_LINK", failure_category="AUTHENTICATION_FAILURE")])
+    decision = StrategyEngine.evaluate_case_strategies(db_session, case, as_of_time=now, router=mock_router)
+
+    assert txn.failure_category == FailureCategory.BANK_TIMEOUT.value
+    assert case.segment.failure_category == FailureCategory.BANK_TIMEOUT.value
+    assert case.segment.name.startswith("bank_timeout_upi_mid")
+
+def test_abandoned_checkout_exact_15m_boundary(db_session: Session):
+    """Verify exact 15m checkout abandonment boundaries: 14m59s (no), 15m00s (no), 15m01s (detected)."""
+    now = datetime(2026, 9, 5, 12, 0, 0, tzinfo=timezone.utc)
+    cust = Customer(email="boundary_user@example.com", customer_type="NEW")
+    db_session.add(cust)
+    db_session.flush()
+
+    txn_14m59s = Transaction(razorpay_order_id="ord_14m59s", customer_id=cust.id, amount_paise=100000, status=TransactionStatus.CREATED.value, failure_category="UNKNOWN", created_at=now - timedelta(minutes=14, seconds=59))
+    txn_15m00s = Transaction(razorpay_order_id="ord_15m00s", customer_id=cust.id, amount_paise=100000, status=TransactionStatus.CREATED.value, failure_category="UNKNOWN", created_at=now - timedelta(minutes=15, seconds=0))
+    txn_15m01s = Transaction(razorpay_order_id="ord_15m01s", customer_id=cust.id, amount_paise=100000, status=TransactionStatus.CREATED.value, failure_category="UNKNOWN", created_at=now - timedelta(minutes=15, seconds=1))
+
+    db_session.add_all([txn_14m59s, txn_15m00s, txn_15m01s])
+    db_session.flush()
+
+    cases = DetectionEngine.detect_abandoned_checkouts(db_session, min_age_minutes=15, as_of_time=now)
+    assert len(cases) == 1
+    assert cases[0].transaction_id == txn_15m01s.id
+
+def test_decision_time_immutability(db_session: Session):
+    """Verify stored RecoveryDecision evidence is immutable to future strategy outcomes."""
+    now = datetime(2026, 9, 5, 12, 0, 0, tzinfo=timezone.utc)
+    cust = Customer(email="immut@example.com", customer_type="NEW")
+    db_session.add(cust)
+    db_session.flush()
+
+    txn = Transaction(razorpay_payment_id="pay_immut", customer_id=cust.id, amount_paise=100000, status="FAILED", failure_category="AUTHENTICATION_FAILURE", created_at=now)
+    db_session.add(txn)
+    db_session.flush()
+
+    case = RecoveryCase(transaction_id=txn.id, customer_id=cust.id, status=RecoveryCaseStatus.DETECTED.value, attempt_count=0)
+    db_session.add(case)
+    db_session.flush()
+    SegmentationService.assign_segment_to_case(db_session, case)
+    EligibilityChecker.evaluate_eligibility(db_session, case, as_of_time=now)
+
+    mock_router = LLMRouter(providers=[CustomMockLLMProvider("PAYMENT_LINK")])
+    decision = StrategyEngine.evaluate_case_strategies(db_session, case, as_of_time=now, router=mock_router)
+
+    initial_evidence = dict(decision.strategy_evidence)
+
+    # Insert 20 future outcomes into DB
+    for i in range(20):
+        so = StrategyOutcome(recovery_case_id=case.id, strategy_type="METHOD_SWITCH", segment_id=case.segment_id, outcome="RECOVERED", amount_recovered_paise=100000, outcome_source="SIMULATED")
+        db_session.add(so)
+    db_session.flush()
+
+    # Re-fetch decision from DB
+    re_queried_decision = db_session.query(RecoveryDecision).filter_by(id=decision.id).first()
+    assert re_queried_decision.strategy_evidence == initial_evidence
+

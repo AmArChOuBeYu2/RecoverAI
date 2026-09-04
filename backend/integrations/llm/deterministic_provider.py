@@ -63,7 +63,7 @@ class DeterministicFallbackProvider(LLMProvider):
             confidence = 0.90
             narrative = f"Transient gateway/bank timeout detected for payment. Automated retry recommended."
 
-        elif category == FailureCategory.CUSTOMER_ABANDONMENT.value:
+        elif category == FailureCategory.CHECKOUT_ABANDONMENT.value:
             strategy = StrategyType.REMINDER.value
             reasoning = "Deterministic rule: Abandoned checkout requires reminder notification."
             recoverability = 0.50

@@ -12,7 +12,7 @@ Your task is to analyze payment failure details, customer profile history, canon
 CRITICAL INSTRUCTIONS:
 1. Output MUST strictly conform to the following JSON schema:
 {
-  "failure_category": "<one of: AUTHENTICATION_FAILURE, INSUFFICIENT_FUNDS, BANK_TIMEOUT, GATEWAY_DOWNTIME, CUSTOMER_ABANDONMENT, METHOD_UNAVAILABLE, ACCOUNT_BLOCKED, EXPIRED_CARD, TECHNICAL_ERROR, UNKNOWN>",
+  "failure_category": "<one of: AUTHENTICATION_FAILURE, INSUFFICIENT_FUNDS, BANK_TIMEOUT, GATEWAY_DOWNTIME, CHECKOUT_ABANDONMENT, METHOD_UNAVAILABLE, ACCOUNT_BLOCKED, EXPIRED_CARD, TECHNICAL_ERROR, UNKNOWN>",
   "diagnosis": "<detailed narrative explaining root cause of failure>",
   "recoverability_score": <float between 0.0 and 1.0 representing propensity to recover>,
   "confidence": <float between 0.0 and 1.0 representing confidence in diagnosis>,
