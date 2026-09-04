@@ -1,0 +1,62 @@
+{
+  "dataset_version": "v1.0",
+  "generator_version": "v1.0",
+  "seed": 20260904,
+  "total_transactions": 1000,
+  "train_transactions_count": 800,
+  "holdout_transactions_count": 200,
+  "customers_count": 400,
+  "generated_at": "2026-09-04T17:09:16.840694+00:00",
+  "data_source": "SYNTHETIC_SIMULATION",
+  "split_definition": {
+    "historical_train_ratio": 0.8,
+    "temporal_holdout_ratio": 0.2,
+    "split_method": "CHRONOLOGICAL_CREATION_TIME"
+  },
+  "stats": {
+    "generated_at": "2026-09-04T17:09:16.840694+00:00",
+    "total_records": 1000,
+    "train_records": 800,
+    "holdout_records": 200,
+    "total_customers": 400,
+    "total_segments": 75,
+    "sample_size_tiers": {
+      "INSUFFICIENT": 63,
+      "LOW": 6,
+      "MEDIUM": 4,
+      "HIGH": 2
+    },
+    "total_revenue_at_risk_paise": 785977100,
+    "total_observed_recovered_paise": 213277994,
+    "observed_overall_recovery_rate": 0.2714,
+    "distributions": {
+      "failure_category": {
+        "CHECKOUT_ABANDONMENT": 149,
+        "AUTHENTICATION_FAILURE": 393,
+        "BANK_TIMEOUT": 253,
+        "UNKNOWN": 6,
+        "NETWORK_FAILURE": 70,
+        "INSUFFICIENT_FUNDS": 97,
+        "REPEATED_FAILURE": 32
+      },
+      "payment_method": {
+        "card": 589,
+        "upi": 289,
+        "netbanking": 87,
+        "wallet": 17,
+        "null": 18
+      },
+      "customer_type": {
+        "NEW": 403,
+        "RETURNING": 458,
+        "FATIGUED": 139
+      },
+      "amount_range": {
+        "MID": 589,
+        "LOW": 253,
+        "HIGH": 132,
+        "PREMIUM": 26
+      }
+    }
+  }
+}
