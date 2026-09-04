@@ -41,25 +41,18 @@ test_engine = create_engine(
 )
 Base.metadata.create_all(bind=test_engine)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-
-def override_get_db():
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 @pytest.fixture
 def db_session():
     """Fixture returning a clean test database session."""
     session = TestingSessionLocal()
+    app.dependency_overrides[get_db] = lambda: session
     try:
         yield session
     finally:
         session.close()
+        app.dependency_overrides.pop(get_db, None)
 
 # -----------------------------------------------------------------------------
 # 1. 4D Segment Derivation & Boundary Tests

@@ -8,6 +8,7 @@ from backend.api.routes.health import router as health_router
 from backend.api.routes.webhooks import router as webhooks_router
 from backend.api.routes.intelligence import router as intelligence_router
 from backend.api.routes.segments import router as segments_router
+from backend.api.routes.recovery import router as recovery_router
 
 app = FastAPI(
     title="RecoverAI",
@@ -27,3 +28,4 @@ app.include_router(health_router)
 app.include_router(webhooks_router)
 app.include_router(intelligence_router)
 app.include_router(segments_router)
+app.include_router(recovery_router)

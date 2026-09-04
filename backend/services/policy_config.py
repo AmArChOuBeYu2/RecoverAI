@@ -33,6 +33,8 @@ class PolicyConfig(BaseModel):
     min_ai_confidence: float = Field(default=0.60, description="Minimum AI confidence for automated action")
     min_recoverability_score: float = Field(default=0.30, description="Minimum recoverability propensity score")
 
+    max_transaction_age_hours: int = Field(default=72, description="Maximum transaction age in hours for eligibility")
+
     @classmethod
     def from_settings(cls) -> "PolicyConfig":
         """Load policy configuration from global application settings."""
@@ -46,4 +48,5 @@ class PolicyConfig(BaseModel):
             contact_end_hour=getattr(settings, "CONTACT_END_HOUR", 21),
             min_ai_confidence=getattr(settings, "MIN_AI_CONFIDENCE", 0.60),
             min_recoverability_score=getattr(settings, "MIN_RECOVERABILITY", 0.30),
+            max_transaction_age_hours=getattr(settings, "MAX_TRANSACTION_AGE_HOURS", 72),
         )

@@ -24,6 +24,9 @@ from backend.services.policy_engine import PolicyEngine, PolicyEvaluationResult,
 from backend.services.authorization import ActionAuthorizationService, ActionAuthorizationError
 
 from backend.services.segmentation import SegmentationService
+from backend.services.detection import DetectionEngine
+from backend.services.context_builder import ContextBuilder
+from backend.services.eligibility import EligibilityChecker, EligibilityResult
 
 __all__ = [
     "sanitize_payload",
@@ -31,6 +34,10 @@ __all__ = [
     "InvalidStateTransitionError",
     "RecoveryService",
     "SegmentationService",
+    "DetectionEngine",
+    "ContextBuilder",
+    "EligibilityChecker",
+    "EligibilityResult",
     "calculate_wilson_lower_bound",
     "derive_sample_size_tier",
     "derive_confidence_level",
