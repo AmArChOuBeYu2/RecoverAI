@@ -39,7 +39,7 @@ data/
 │   ├── customers.json          # 400 customer profiles with consistent payment history
 │   ├── transactions.json       # 800 historical/train payment failures
 │   ├── outcomes.json           # 800 observed recovery strategy outcomes
-│   └── segments.json           # Segment definitions
+│   └── segments.json           # 145 canonical 4D segment definitions
 ├── holdout/
 │   ├── transactions.json       # 200 holdout/test payment failures (chronologically latest)
 │   └── outcomes.json           # 200 holdout observed outcomes
@@ -89,16 +89,18 @@ data/
 
 ---
 
-## Segment Generation & Sample-Size Tiers
+## Canonical 4-Dimensional Segment Generation & Sample-Size Tiers
 
-Segments are derived deterministically:
-`segment_name = failure_category_lower + "_" + payment_method + "_" + amount_range_lower`
+Canonical segments are derived deterministically across 4 dimensions:
+`segment_name = failure_category_lower + "_" + payment_method + "_" + amount_range_lower + "_" + customer_type_lower`
 
-The dataset exercises all 4 sample-size protection tiers:
-1. **INSUFFICIENT** (< 10 records): Long-tail segment combinations.
-2. **LOW** (10 – 30 records): Moderate frequency failure patterns.
-3. **MEDIUM** (31 – 100 records): Common failure patterns.
-4. **HIGH** (> 100 records): Dominant failure clusters (e.g., `authentication_failure_card_mid`).
+Across 1,000 synthetic records, 145 canonical 4D segments are generated, covering all 4 sample-size protection tiers:
+1. **INSUFFICIENT** (< 10 records): 133 sparse long-tail segment combinations.
+2. **LOW** (10 – 30 records): 7 moderate frequency segments.
+3. **MEDIUM** (31 – 100 records): 2 common failure segments.
+4. **HIGH** (> 100 records): 3 dominant failure clusters (e.g., `authentication_failure_card_mid_returning`, `bank_timeout_upi_low_new`).
+
+When sample size for a 4D segment is `INSUFFICIENT` (<10), the Strategy Engine falls back to broader 3D aggregations (`failure_category × payment_method × amount_range`) and Wilson score confidence lower bounds.
 
 ---
 
@@ -127,7 +129,8 @@ Generation executes strict validation (`backend/seed/validation.py`):
 2. **Amount Invariants**: `recovered_amount_paise <= amount_paise` and `amount_paise > 0`.
 3. **Customer History Invariants**: `successful + failed <= total`, `recovered <= failed`.
 4. **Temporal Ordering**: `created_at <= failed_at`, and `max(train.created_at) <= min(holdout.created_at)`.
-5. **Anti-Leakage**: Zero ground-truth fields present in `OBSERVED` outcomes.
+5. **Canonical 4D Identity**: `segment_name` strictly matches `failure_category × payment_method × amount_range × customer_type`.
+6. **Anti-Leakage**: Zero ground-truth fields present in `OBSERVED` outcomes.
 
 ---
 
@@ -138,7 +141,7 @@ To regenerate the synthetic dataset deterministically:
 python -m backend.seed.generator
 ```
 
-To run the automated test suite (83 passed tests):
+To run the automated test suite (85 passed tests):
 ```bash
 .venv\Scripts\pytest.exe
 ```

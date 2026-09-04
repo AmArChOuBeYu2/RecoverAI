@@ -1,6 +1,6 @@
 """
 Synthetic Transaction Generator
-Generates realistic payment failures with heavy-tailed amount distribution, controlled segment density,
+Generates realistic payment failures with heavy-tailed amount distribution, canonical 4D segment identity,
 and exact boundary edge cases.
 """
 
@@ -8,7 +8,7 @@ import random
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 from backend.seed.config import GeneratorConfig
-from backend.models.enums import FailureCategory, AmountRange
+from backend.models.enums import FailureCategory, AmountRange, CustomerType
 
 EXACT_EDGE_CASE_AMOUNTS = [
     49999,   # ₹499.99 (LOW/MID boundary)
@@ -32,6 +32,20 @@ def derive_amount_range(amount_paise: int) -> str:
     else:
         return AmountRange.PREMIUM.value
 
+def derive_canonical_segment_name(
+    failure_category: str,
+    payment_method: str | None,
+    amount_range: str,
+    customer_type: str | None,
+) -> str:
+    """
+    Derive 4-dimensional canonical segment name:
+    failure_category x payment_method x amount_range x customer_type
+    """
+    method_str = payment_method.lower() if payment_method else "any"
+    cust_type_str = customer_type.lower() if customer_type else "any"
+    return f"{failure_category.lower()}_{method_str}_{amount_range.lower()}_{cust_type_str}"
+
 def generate_transactions(
     config: GeneratorConfig, customers: List[Dict[str, Any]], rng: random.Random
 ) -> List[Dict[str, Any]]:
@@ -49,9 +63,13 @@ def generate_transactions(
     payment_methods = list(config.payment_method_distribution.keys())
     method_weights = list(config.payment_method_distribution.values())
 
+    # Pre-filter customer pools for cluster shaping
+    returning_customers = [c for c in customers if c["customer_type"] == CustomerType.RETURNING.value]
+    new_customers = [c for c in customers if c["customer_type"] == CustomerType.NEW.value]
+    fatigued_customers = [c for c in customers if c["customer_type"] == CustomerType.FATIGUED.value]
+
     for i in range(1, config.total_transactions + 1):
         idx = i - 1
-        customer = rng.choice(customers)
 
         # 1. Determine amount in integer paise
         if idx in edge_case_map:
@@ -67,41 +85,54 @@ def generate_transactions(
             else:
                 amount_paise = rng.randint(5000001, 15000000) # ₹50,000 - ₹150,000 (PREMIUM)
 
-        # 2. Failure category & method selection with shaped segment clusters
-        # Guarantees HIGH (>100), MEDIUM (31-100), LOW (10-30), and INSUFFICIENT (<10) tiers at 500 or 1000 txns
+        # 2. Failure category, payment method & customer selection with shaped segment clusters
+        # Guarantees HIGH (>100), MEDIUM (31-100), LOW (10-30), and INSUFFICIENT (<10) 4D sample-size tiers
         roll_cluster = rng.random()
-        if roll_cluster < 0.25:
-            # Cluster 1 (HIGH tier): AUTHENTICATION_FAILURE + card + MID amount
+        if roll_cluster < 0.22:
+            # Cluster 1 (HIGH tier): AUTHENTICATION_FAILURE + card + MID amount + RETURNING customer
             failure_cat = FailureCategory.AUTHENTICATION_FAILURE.value
             method = "card"
+            customer = rng.choice(returning_customers) if returning_customers else rng.choice(customers)
             if idx not in edge_case_map:
                 amount_paise = rng.randint(50000, 500000)
-        elif roll_cluster < 0.40:
-            # Cluster 2 (HIGH/MEDIUM tier): BANK_TIMEOUT + upi + LOW amount
+        elif roll_cluster < 0.38:
+            # Cluster 2 (HIGH/MEDIUM tier): BANK_TIMEOUT + upi + LOW amount + NEW customer
             failure_cat = FailureCategory.BANK_TIMEOUT.value
             method = "upi"
+            customer = rng.choice(new_customers) if new_customers else rng.choice(customers)
             if idx not in edge_case_map:
                 amount_paise = rng.randint(5000, 49999)
-        elif roll_cluster < 0.50:
-            # Cluster 3 (MEDIUM tier): CHECKOUT_ABANDONMENT + card + MID amount
+        elif roll_cluster < 0.48:
+            # Cluster 3 (MEDIUM tier): CHECKOUT_ABANDONMENT + card + MID amount + NEW customer
             failure_cat = FailureCategory.CHECKOUT_ABANDONMENT.value
             method = "card"
+            customer = rng.choice(new_customers) if new_customers else rng.choice(customers)
             if idx not in edge_case_map:
                 amount_paise = rng.randint(50000, 500000)
-        elif roll_cluster < 0.55:
-            # Cluster 4 (LOW tier): INSUFFICIENT_FUNDS + card + HIGH amount
+        elif roll_cluster < 0.54:
+            # Cluster 4 (MEDIUM/LOW tier): AUTHENTICATION_FAILURE + card + MID amount + FATIGUED customer
+            failure_cat = FailureCategory.AUTHENTICATION_FAILURE.value
+            method = "card"
+            customer = rng.choice(fatigued_customers) if fatigued_customers else rng.choice(customers)
+            if idx not in edge_case_map:
+                amount_paise = rng.randint(50000, 500000)
+        elif roll_cluster < 0.58:
+            # Cluster 5 (LOW tier): INSUFFICIENT_FUNDS + card + HIGH amount + RETURNING customer
             failure_cat = FailureCategory.INSUFFICIENT_FUNDS.value
             method = "card"
+            customer = rng.choice(returning_customers) if returning_customers else rng.choice(customers)
             if idx not in edge_case_map:
                 amount_paise = rng.randint(500001, 5000000)
-        elif roll_cluster < 0.59:
-            # Cluster 5 (LOW tier): NETWORK_FAILURE + netbanking + MID amount
+        elif roll_cluster < 0.61:
+            # Cluster 6 (LOW tier): NETWORK_FAILURE + netbanking + MID amount + RETURNING customer
             failure_cat = FailureCategory.NETWORK_FAILURE.value
             method = "netbanking"
+            customer = rng.choice(returning_customers) if returning_customers else rng.choice(customers)
             if idx not in edge_case_map:
                 amount_paise = rng.randint(50000, 500000)
         else:
-            # Long-tail unclustered transactions (forms INSUFFICIENT tier segments <10 txns)
+            # Unclustered long-tail transactions (forms sparse INSUFFICIENT tier segments <10 txns)
+            customer = rng.choice(customers)
             failure_cat = rng.choices(failure_categories, weights=failure_weights, k=1)[0]
             if failure_cat == FailureCategory.CHECKOUT_ABANDONMENT.value:
                 method = rng.choice(["card", "upi", None])
@@ -120,9 +151,10 @@ def generate_transactions(
         # 4. Error code metadata mapping
         error_code, error_desc, error_reason = _get_error_metadata(failure_cat, rng)
 
-        # 5. Derive segment name
+        # 5. Derive canonical 4-dimensional segment name
         amount_range = derive_amount_range(amount_paise)
-        segment_name = f"{failure_cat.lower()}_{method or 'any'}_{amount_range.lower()}"
+        cust_type = customer["customer_type"]
+        segment_name = derive_canonical_segment_name(failure_cat, method, amount_range, cust_type)
 
         txn_record = {
             "id": f"txn_synth_{i:05d}",
@@ -135,7 +167,7 @@ def generate_transactions(
             "failure_category": failure_cat,
             "payment_method": method,
             "amount_range": amount_range,
-            "customer_type": customer["customer_type"],
+            "customer_type": cust_type,
             "segment_name": segment_name,
             "error_code": error_code,
             "error_description": error_desc,

@@ -303,10 +303,12 @@ Abandoned (failed):      order.status == "attempted" AND order.amount_paid == 0 
 
 ## Segmentation Engine
 The Segmentation Engine groups transactions deterministically:
-- Assigns each transaction to a segment based on: `failure_category` + `payment_method` + `amount_range` + `customer_type`
+- Assigns each transaction to a canonical segment based on: `failure_category` × `payment_method` × `amount_range` × `customer_type`
 - Segments are pre-defined, deterministic (not AI-driven)
-- Each segment has its own strategy performance history
-- Example segments: `auth_failure_card_mid_value`, `gateway_timeout_upi_low_value`, `insufficient_funds_card_high_value`
+- Formula: `segment_name = failure_category_lower + "_" + payment_method + "_" + amount_range_lower + "_" + customer_type_lower`
+- Each segment tracks its own strategy performance history (attempts, successes, recovery rate, Wilson lower bound)
+- Example segments: `auth_failure_card_mid_returning`, `bank_timeout_upi_low_new`, `insufficient_funds_card_high_fatigued`
+- Fallback hierarchy for sparse segments (<10 txns): 4D segment → 3D aggregate (`failure_category × payment_method × amount_range`) → failure category baseline.
 
 ## Strategy Engine
 Strategy selection operates on a hybrid AI/observed data model with **small-sample protection**:

@@ -339,4 +339,19 @@ Classification:
 4. **Action Authorization Guard**: `ActionAuthorizationService` prevents financial action execution unless decision is `APPROVE` and `can_execute_action is True`. `DENY` and `ESCALATE` strictly block execution.
 5. **Policy Versioning**: Every decision is stamped with `policy_version = "v1.0"` for simulator compatibility.
 
+---
+
+### DEC-022: Canonical 4-Dimensional Segment Identity
+
+**Decision:** Define canonical segment identity as a 4-dimensional key: `failure_category × payment_method × amount_range × customer_type`.
+
+**Key Format:**
+`segment_name = failure_category_lower + "_" + payment_method + "_" + amount_range_lower + "_" + customer_type_lower`
+
+**Rationale:**
+1. Customer behavioral archetypes (`NEW`, `RETURNING`, `FATIGUED`) significantly alter recovery probability, contact sensitivity, and policy boundaries. For example, `FATIGUED` customers exhibit lower recovery rates under repetitive contact and trigger policy cooldown blocks, whereas `RETURNING` customers show higher responsiveness to direct Payment Links.
+2. Incorporating `customer_type` directly into the canonical segment key allows the strategy engine to track separate historical outcome distributions (attempt count, success count, recovery rate) per customer archetype (e.g., `auth_failure_card_mid_returning` vs `auth_failure_card_mid_fatigued`).
+3. For sparse combinations with sample sizes < 10 (`INSUFFICIENT` tier), the system relies on Wilson score lower bounds and falls back to 3D/2D aggregate levels (`failure_category × payment_method × amount_range` or broader failure category baselines), preserving statistical protection without losing archetype granularity.
+
+
 

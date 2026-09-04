@@ -32,7 +32,7 @@ from backend.models import (
 
 DEFAULT_SEGMENTS = [
     {
-        "name": "auth_failure_card_mid_value",
+        "name": "auth_failure_card_mid_returning",
         "failure_category": FailureCategory.AUTHENTICATION_FAILURE.value,
         "payment_method": "card",
         "amount_range": AmountRange.MID.value,
@@ -40,36 +40,36 @@ DEFAULT_SEGMENTS = [
         "description": "Card authentication failure on mid-value transaction for returning customer.",
     },
     {
-        "name": "bank_timeout_upi_low_value",
+        "name": "bank_timeout_upi_low_new",
         "failure_category": FailureCategory.BANK_TIMEOUT.value,
         "payment_method": "upi",
         "amount_range": AmountRange.LOW.value,
         "customer_type": CustomerType.NEW.value,
-        "description": "Bank timeout during UPI transaction on low-value amount.",
+        "description": "Bank timeout during UPI transaction on low-value amount for new customer.",
     },
     {
-        "name": "insufficient_funds_card_high_value",
+        "name": "insufficient_funds_card_high_returning",
         "failure_category": FailureCategory.INSUFFICIENT_FUNDS.value,
         "payment_method": "card",
         "amount_range": AmountRange.HIGH.value,
         "customer_type": CustomerType.RETURNING.value,
-        "description": "Insufficient funds error on high-value card transaction.",
+        "description": "Insufficient funds error on high-value card transaction for returning customer.",
     },
     {
-        "name": "checkout_abandonment_any_mid_value",
+        "name": "checkout_abandonment_card_mid_new",
         "failure_category": FailureCategory.CHECKOUT_ABANDONMENT.value,
-        "payment_method": None,
+        "payment_method": "card",
         "amount_range": AmountRange.MID.value,
         "customer_type": CustomerType.NEW.value,
-        "description": "Inferred checkout abandonment (order created, no payment attempt).",
+        "description": "Inferred checkout abandonment on card transaction for new customer.",
     },
     {
-        "name": "network_failure_netbanking_any_value",
+        "name": "network_failure_netbanking_mid_returning",
         "failure_category": FailureCategory.NETWORK_FAILURE.value,
         "payment_method": "netbanking",
         "amount_range": AmountRange.MID.value,
-        "customer_type": None,
-        "description": "Gateway/network connection dropped during netbanking checkout.",
+        "customer_type": CustomerType.RETURNING.value,
+        "description": "Gateway/network connection dropped during netbanking checkout for returning customer.",
     },
 ]
 
@@ -111,7 +111,7 @@ def run_synthetic_generation(
     train_outcomes = sorted_outcomes[:split_index]
     holdout_outcomes = sorted_outcomes[split_index:]
 
-    # 5. Extract Segments and Compute Segment Performance Summaries
+    # 5. Extract 4-Dimensional Canonical Segments
     segments_dict: Dict[str, Dict[str, Any]] = {}
     for txn in sorted_txns:
         seg_name = txn["segment_name"]
@@ -122,7 +122,7 @@ def run_synthetic_generation(
                 "payment_method": txn["payment_method"],
                 "amount_range": txn["amount_range"],
                 "customer_type": txn["customer_type"],
-                "description": f"Synthetic segment for {seg_name}",
+                "description": f"Canonical 4D segment for {seg_name}",
             }
     segments_list = list(segments_dict.values())
 
@@ -320,5 +320,6 @@ if __name__ == "__main__":
     results = run_synthetic_generation()
     print("Synthetic dataset generation complete!")
     print(f"Total transactions: {results['stats']['total_records']}")
+    print(f"Total canonical segments: {results['stats']['total_segments']}")
     print(f"Train/Holdout split: {results['stats']['train_records']} / {results['stats']['holdout_records']}")
     print(f"Sample-size tiers: {results['stats']['sample_size_tiers']}")

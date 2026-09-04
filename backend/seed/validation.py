@@ -1,7 +1,7 @@
 """
 Synthetic Dataset Validation Layer for RecoverAI
 Validates schema correctness, enum integrity, amount invariants, history consistency,
-timestamp chronological order, sample-size tier coverage, and anti-leakage boundaries.
+timestamp chronological order, sample-size tier coverage, canonical 4D segment identity, and anti-leakage boundaries.
 """
 
 from collections import Counter
@@ -60,7 +60,7 @@ def validate_synthetic_dataset(
         if contacts < 0:
             raise ValueError(f"Negative contact count for {cust['id']}: {contacts}")
 
-    # 2. Validate Transactions
+    # 2. Validate Transactions & 4D Segment Identity
     if len(transactions) < 500:
         raise ValueError(f"Transaction count below 500 requirement: {len(transactions)}")
 
@@ -79,6 +79,16 @@ def validate_synthetic_dataset(
 
         if txn["amount_range"] not in VALID_AMOUNT_RANGES:
             raise ValueError(f"Invalid amount range in transaction {t_id}: {txn['amount_range']}")
+
+        if txn["customer_type"] not in VALID_CUSTOMER_TYPES:
+            raise ValueError(f"Invalid customer type in transaction {t_id}: {txn['customer_type']}")
+
+        # Validate canonical 4D segment identity key format
+        method_str = txn["payment_method"].lower() if txn["payment_method"] else "any"
+        cust_str = txn["customer_type"].lower() if txn["customer_type"] else "any"
+        expected_segment = f"{txn['failure_category'].lower()}_{method_str}_{txn['amount_range'].lower()}_{cust_str}"
+        if txn["segment_name"] != expected_segment:
+            raise ValueError(f"Segment identity mismatch in transaction {t_id}: expected '{expected_segment}', got '{txn['segment_name']}'")
 
         amt = txn["amount_paise"]
         if not isinstance(amt, int) or amt <= 0:
@@ -112,7 +122,6 @@ def validate_synthetic_dataset(
         if rec_amt < 0:
             raise ValueError(f"Negative recovered amount in outcome for {t_id}: {rec_amt}")
 
-        # Find corresponding transaction
         matching_txn = next(t for t in transactions if t["id"] == t_id)
         if rec_amt > matching_txn["amount_paise"]:
             raise ValueError(f"Outcome recovered amount ({rec_amt}) > transaction amount ({matching_txn['amount_paise']})")

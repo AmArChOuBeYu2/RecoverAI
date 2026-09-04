@@ -6,7 +6,7 @@
   "train_transactions_count": 800,
   "holdout_transactions_count": 200,
   "customers_count": 400,
-  "generated_at": "2026-09-04T17:09:16.840694+00:00",
+  "generated_at": "2026-09-04T17:54:12.902440+00:00",
   "data_source": "SYNTHETIC_SIMULATION",
   "split_definition": {
     "historical_train_ratio": 0.8,
@@ -14,48 +14,48 @@
     "split_method": "CHRONOLOGICAL_CREATION_TIME"
   },
   "stats": {
-    "generated_at": "2026-09-04T17:09:16.840694+00:00",
+    "generated_at": "2026-09-04T17:54:12.902440+00:00",
     "total_records": 1000,
     "train_records": 800,
     "holdout_records": 200,
     "total_customers": 400,
-    "total_segments": 75,
+    "total_segments": 145,
     "sample_size_tiers": {
-      "INSUFFICIENT": 63,
-      "LOW": 6,
-      "MEDIUM": 4,
-      "HIGH": 2
+      "INSUFFICIENT": 133,
+      "LOW": 7,
+      "MEDIUM": 2,
+      "HIGH": 3
     },
-    "total_revenue_at_risk_paise": 785977100,
-    "total_observed_recovered_paise": 213277994,
-    "observed_overall_recovery_rate": 0.2714,
+    "total_revenue_at_risk_paise": 844627404,
+    "total_observed_recovered_paise": 200766822,
+    "observed_overall_recovery_rate": 0.2377,
     "distributions": {
       "failure_category": {
-        "CHECKOUT_ABANDONMENT": 149,
-        "AUTHENTICATION_FAILURE": 393,
-        "BANK_TIMEOUT": 253,
-        "UNKNOWN": 6,
-        "NETWORK_FAILURE": 70,
-        "INSUFFICIENT_FUNDS": 97,
-        "REPEATED_FAILURE": 32
+        "BANK_TIMEOUT": 244,
+        "AUTHENTICATION_FAILURE": 411,
+        "CHECKOUT_ABANDONMENT": 171,
+        "NETWORK_FAILURE": 41,
+        "REPEATED_FAILURE": 34,
+        "UNKNOWN": 9,
+        "INSUFFICIENT_FUNDS": 90
       },
       "payment_method": {
-        "card": 589,
-        "upi": 289,
-        "netbanking": 87,
-        "wallet": 17,
-        "null": 18
+        "upi": 306,
+        "card": 606,
+        "netbanking": 59,
+        "wallet": 14,
+        "null": 15
       },
       "customer_type": {
-        "NEW": 403,
-        "RETURNING": 458,
-        "FATIGUED": 139
+        "NEW": 436,
+        "FATIGUED": 132,
+        "RETURNING": 432
       },
       "amount_range": {
-        "MID": 589,
-        "LOW": 253,
-        "HIGH": 132,
-        "PREMIUM": 26
+        "LOW": 241,
+        "MID": 600,
+        "HIGH": 125,
+        "PREMIUM": 34
       }
     }
   }

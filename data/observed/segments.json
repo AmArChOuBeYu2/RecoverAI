@@ -1,602 +1,1162 @@
 [
   {
-    "name": "checkout_abandonment_card_mid",
+    "name": "bank_timeout_upi_low_new",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for bank_timeout_upi_low_new"
+  },
+  {
+    "name": "authentication_failure_upi_mid_fatigued",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for authentication_failure_upi_mid_fatigued"
+  },
+  {
+    "name": "authentication_failure_card_mid_returning",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for authentication_failure_card_mid_returning"
+  },
+  {
+    "name": "authentication_failure_upi_high_new",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for authentication_failure_upi_high_new"
+  },
+  {
+    "name": "authentication_failure_upi_mid_returning",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for authentication_failure_upi_mid_returning"
+  },
+  {
+    "name": "checkout_abandonment_card_mid_new",
     "failure_category": "CHECKOUT_ABANDONMENT",
     "payment_method": "card",
     "amount_range": "MID",
     "customer_type": "NEW",
-    "description": "Synthetic segment for checkout_abandonment_card_mid"
+    "description": "Canonical 4D segment for checkout_abandonment_card_mid_new"
   },
   {
-    "name": "authentication_failure_card_mid",
+    "name": "network_failure_card_low_returning",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "card",
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for network_failure_card_low_returning"
+  },
+  {
+    "name": "bank_timeout_upi_premium_new",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "upi",
+    "amount_range": "PREMIUM",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for bank_timeout_upi_premium_new"
+  },
+  {
+    "name": "repeated_failure_card_low_returning",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "card",
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for repeated_failure_card_low_returning"
+  },
+  {
+    "name": "checkout_abandonment_upi_mid_fatigued",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for checkout_abandonment_upi_mid_fatigued"
+  },
+  {
+    "name": "repeated_failure_card_mid_new",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for repeated_failure_card_mid_new"
+  },
+  {
+    "name": "bank_timeout_upi_high_new",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for bank_timeout_upi_high_new"
+  },
+  {
+    "name": "authentication_failure_card_low_new",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "card",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for authentication_failure_card_low_new"
+  },
+  {
+    "name": "unknown_upi_mid_returning",
+    "failure_category": "UNKNOWN",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for unknown_upi_mid_returning"
+  },
+  {
+    "name": "insufficient_funds_card_high_returning",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "card",
+    "amount_range": "HIGH",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for insufficient_funds_card_high_returning"
+  },
+  {
+    "name": "network_failure_netbanking_mid_returning",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for network_failure_netbanking_mid_returning"
+  },
+  {
+    "name": "bank_timeout_upi_mid_new",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for bank_timeout_upi_mid_new"
+  },
+  {
+    "name": "authentication_failure_card_mid_new",
     "failure_category": "AUTHENTICATION_FAILURE",
     "payment_method": "card",
     "amount_range": "MID",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for authentication_failure_card_mid"
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for authentication_failure_card_mid_new"
   },
   {
-    "name": "bank_timeout_upi_low",
+    "name": "checkout_abandonment_card_mid_returning",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for checkout_abandonment_card_mid_returning"
+  },
+  {
+    "name": "network_failure_netbanking_low_returning",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for network_failure_netbanking_low_returning"
+  },
+  {
+    "name": "authentication_failure_card_mid_fatigued",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for authentication_failure_card_mid_fatigued"
+  },
+  {
+    "name": "authentication_failure_upi_high_returning",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for authentication_failure_upi_high_returning"
+  },
+  {
+    "name": "repeated_failure_upi_low_new",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for repeated_failure_upi_low_new"
+  },
+  {
+    "name": "insufficient_funds_upi_low_new",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for insufficient_funds_upi_low_new"
+  },
+  {
+    "name": "insufficient_funds_wallet_mid_new",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "wallet",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for insufficient_funds_wallet_mid_new"
+  },
+  {
+    "name": "authentication_failure_card_low_returning",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "card",
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for authentication_failure_card_low_returning"
+  },
+  {
+    "name": "authentication_failure_netbanking_mid_new",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for authentication_failure_netbanking_mid_new"
+  },
+  {
+    "name": "authentication_failure_card_premium_returning",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "card",
+    "amount_range": "PREMIUM",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for authentication_failure_card_premium_returning"
+  },
+  {
+    "name": "bank_timeout_upi_mid_returning",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for bank_timeout_upi_mid_returning"
+  },
+  {
+    "name": "insufficient_funds_netbanking_mid_new",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "netbanking",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for insufficient_funds_netbanking_mid_new"
+  },
+  {
+    "name": "bank_timeout_card_low_returning",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "card",
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for bank_timeout_card_low_returning"
+  },
+  {
+    "name": "bank_timeout_netbanking_premium_returning",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "netbanking",
+    "amount_range": "PREMIUM",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for bank_timeout_netbanking_premium_returning"
+  },
+  {
+    "name": "bank_timeout_upi_low_returning",
     "failure_category": "BANK_TIMEOUT",
     "payment_method": "upi",
     "amount_range": "LOW",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for bank_timeout_upi_low"
+    "description": "Canonical 4D segment for bank_timeout_upi_low_returning"
   },
   {
-    "name": "bank_timeout_upi_mid",
-    "failure_category": "BANK_TIMEOUT",
-    "payment_method": "upi",
-    "amount_range": "MID",
-    "customer_type": "FATIGUED",
-    "description": "Synthetic segment for bank_timeout_upi_mid"
-  },
-  {
-    "name": "unknown_netbanking_mid",
-    "failure_category": "UNKNOWN",
+    "name": "repeated_failure_netbanking_mid_returning",
+    "failure_category": "REPEATED_FAILURE",
     "payment_method": "netbanking",
     "amount_range": "MID",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for unknown_netbanking_mid"
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for repeated_failure_netbanking_mid_returning"
   },
   {
-    "name": "authentication_failure_wallet_mid",
+    "name": "authentication_failure_upi_mid_new",
     "failure_category": "AUTHENTICATION_FAILURE",
-    "payment_method": "wallet",
+    "payment_method": "upi",
     "amount_range": "MID",
     "customer_type": "NEW",
-    "description": "Synthetic segment for authentication_failure_wallet_mid"
+    "description": "Canonical 4D segment for authentication_failure_upi_mid_new"
   },
   {
-    "name": "network_failure_card_high",
-    "failure_category": "NETWORK_FAILURE",
-    "payment_method": "card",
-    "amount_range": "HIGH",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for network_failure_card_high"
-  },
-  {
-    "name": "insufficient_funds_card_high",
-    "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "card",
-    "amount_range": "HIGH",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for insufficient_funds_card_high"
-  },
-  {
-    "name": "bank_timeout_upi_premium",
-    "failure_category": "BANK_TIMEOUT",
+    "name": "repeated_failure_upi_high_new",
+    "failure_category": "REPEATED_FAILURE",
     "payment_method": "upi",
-    "amount_range": "PREMIUM",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for bank_timeout_upi_premium"
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for repeated_failure_upi_high_new"
   },
   {
-    "name": "checkout_abandonment_any_mid",
+    "name": "checkout_abandonment_any_mid_returning",
     "failure_category": "CHECKOUT_ABANDONMENT",
     "payment_method": null,
     "amount_range": "MID",
-    "customer_type": "FATIGUED",
-    "description": "Synthetic segment for checkout_abandonment_any_mid"
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for checkout_abandonment_any_mid_returning"
   },
   {
-    "name": "bank_timeout_wallet_high",
-    "failure_category": "BANK_TIMEOUT",
+    "name": "repeated_failure_card_high_returning",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "card",
+    "amount_range": "HIGH",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for repeated_failure_card_high_returning"
+  },
+  {
+    "name": "authentication_failure_wallet_high_returning",
+    "failure_category": "AUTHENTICATION_FAILURE",
     "payment_method": "wallet",
     "amount_range": "HIGH",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for bank_timeout_wallet_high"
+    "description": "Canonical 4D segment for authentication_failure_wallet_high_returning"
   },
   {
-    "name": "network_failure_netbanking_mid",
+    "name": "network_failure_upi_mid_fatigued",
     "failure_category": "NETWORK_FAILURE",
-    "payment_method": "netbanking",
-    "amount_range": "MID",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for network_failure_netbanking_mid"
-  },
-  {
-    "name": "authentication_failure_card_low",
-    "failure_category": "AUTHENTICATION_FAILURE",
-    "payment_method": "card",
-    "amount_range": "LOW",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for authentication_failure_card_low"
-  },
-  {
-    "name": "bank_timeout_netbanking_mid",
-    "failure_category": "BANK_TIMEOUT",
-    "payment_method": "netbanking",
+    "payment_method": "upi",
     "amount_range": "MID",
     "customer_type": "FATIGUED",
-    "description": "Synthetic segment for bank_timeout_netbanking_mid"
+    "description": "Canonical 4D segment for network_failure_upi_mid_fatigued"
   },
   {
-    "name": "repeated_failure_card_high",
-    "failure_category": "REPEATED_FAILURE",
-    "payment_method": "card",
-    "amount_range": "HIGH",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for repeated_failure_card_high"
-  },
-  {
-    "name": "repeated_failure_upi_high",
-    "failure_category": "REPEATED_FAILURE",
-    "payment_method": "upi",
-    "amount_range": "HIGH",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for repeated_failure_upi_high"
-  },
-  {
-    "name": "bank_timeout_upi_high",
-    "failure_category": "BANK_TIMEOUT",
-    "payment_method": "upi",
-    "amount_range": "HIGH",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for bank_timeout_upi_high"
-  },
-  {
-    "name": "authentication_failure_card_high",
-    "failure_category": "AUTHENTICATION_FAILURE",
-    "payment_method": "card",
-    "amount_range": "HIGH",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for authentication_failure_card_high"
-  },
-  {
-    "name": "authentication_failure_upi_premium",
-    "failure_category": "AUTHENTICATION_FAILURE",
+    "name": "checkout_abandonment_upi_premium_returning",
+    "failure_category": "CHECKOUT_ABANDONMENT",
     "payment_method": "upi",
     "amount_range": "PREMIUM",
-    "customer_type": "FATIGUED",
-    "description": "Synthetic segment for authentication_failure_upi_premium"
-  },
-  {
-    "name": "insufficient_funds_netbanking_low",
-    "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "netbanking",
-    "amount_range": "LOW",
-    "customer_type": "FATIGUED",
-    "description": "Synthetic segment for insufficient_funds_netbanking_low"
-  },
-  {
-    "name": "repeated_failure_upi_low",
-    "failure_category": "REPEATED_FAILURE",
-    "payment_method": "upi",
-    "amount_range": "LOW",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for repeated_failure_upi_low"
+    "description": "Canonical 4D segment for checkout_abandonment_upi_premium_returning"
   },
   {
-    "name": "repeated_failure_card_mid",
-    "failure_category": "REPEATED_FAILURE",
+    "name": "checkout_abandonment_upi_mid_new",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for checkout_abandonment_upi_mid_new"
+  },
+  {
+    "name": "checkout_abandonment_card_high_new",
+    "failure_category": "CHECKOUT_ABANDONMENT",
     "payment_method": "card",
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for checkout_abandonment_card_high_new"
+  },
+  {
+    "name": "authentication_failure_card_high_new",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "card",
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for authentication_failure_card_high_new"
+  },
+  {
+    "name": "bank_timeout_netbanking_mid_returning",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "netbanking",
     "amount_range": "MID",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for repeated_failure_card_mid"
+    "description": "Canonical 4D segment for bank_timeout_netbanking_mid_returning"
   },
   {
-    "name": "checkout_abandonment_any_high",
+    "name": "bank_timeout_upi_high_fatigued",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for bank_timeout_upi_high_fatigued"
+  },
+  {
+    "name": "bank_timeout_upi_premium_returning",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "upi",
+    "amount_range": "PREMIUM",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for bank_timeout_upi_premium_returning"
+  },
+  {
+    "name": "authentication_failure_card_high_returning",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "card",
+    "amount_range": "HIGH",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for authentication_failure_card_high_returning"
+  },
+  {
+    "name": "checkout_abandonment_any_high_new",
     "failure_category": "CHECKOUT_ABANDONMENT",
     "payment_method": null,
     "amount_range": "HIGH",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for checkout_abandonment_any_high"
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for checkout_abandonment_any_high_new"
   },
   {
-    "name": "network_failure_card_low",
-    "failure_category": "NETWORK_FAILURE",
-    "payment_method": "card",
-    "amount_range": "LOW",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for network_failure_card_low"
-  },
-  {
-    "name": "authentication_failure_upi_low",
-    "failure_category": "AUTHENTICATION_FAILURE",
+    "name": "insufficient_funds_upi_mid_returning",
+    "failure_category": "INSUFFICIENT_FUNDS",
     "payment_method": "upi",
-    "amount_range": "LOW",
-    "customer_type": "FATIGUED",
-    "description": "Synthetic segment for authentication_failure_upi_low"
-  },
-  {
-    "name": "network_failure_card_mid",
-    "failure_category": "NETWORK_FAILURE",
-    "payment_method": "card",
     "amount_range": "MID",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for network_failure_card_mid"
+    "description": "Canonical 4D segment for insufficient_funds_upi_mid_returning"
   },
   {
-    "name": "bank_timeout_wallet_mid",
-    "failure_category": "BANK_TIMEOUT",
-    "payment_method": "wallet",
-    "amount_range": "MID",
+    "name": "insufficient_funds_netbanking_high_returning",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "netbanking",
+    "amount_range": "HIGH",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for bank_timeout_wallet_mid"
+    "description": "Canonical 4D segment for insufficient_funds_netbanking_high_returning"
   },
   {
-    "name": "repeated_failure_upi_mid",
+    "name": "repeated_failure_upi_premium_new",
     "failure_category": "REPEATED_FAILURE",
     "payment_method": "upi",
-    "amount_range": "MID",
-    "customer_type": "FATIGUED",
-    "description": "Synthetic segment for repeated_failure_upi_mid"
-  },
-  {
-    "name": "checkout_abandonment_upi_low",
-    "failure_category": "CHECKOUT_ABANDONMENT",
-    "payment_method": "upi",
-    "amount_range": "LOW",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for checkout_abandonment_upi_low"
-  },
-  {
-    "name": "bank_timeout_card_mid",
-    "failure_category": "BANK_TIMEOUT",
-    "payment_method": "card",
-    "amount_range": "MID",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for bank_timeout_card_mid"
-  },
-  {
-    "name": "checkout_abandonment_card_low",
-    "failure_category": "CHECKOUT_ABANDONMENT",
-    "payment_method": "card",
-    "amount_range": "LOW",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for checkout_abandonment_card_low"
-  },
-  {
-    "name": "bank_timeout_card_low",
-    "failure_category": "BANK_TIMEOUT",
-    "payment_method": "card",
-    "amount_range": "LOW",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for bank_timeout_card_low"
-  },
-  {
-    "name": "checkout_abandonment_card_premium",
-    "failure_category": "CHECKOUT_ABANDONMENT",
-    "payment_method": "card",
     "amount_range": "PREMIUM",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for checkout_abandonment_card_premium"
-  },
-  {
-    "name": "authentication_failure_netbanking_high",
-    "failure_category": "AUTHENTICATION_FAILURE",
-    "payment_method": "netbanking",
-    "amount_range": "HIGH",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for authentication_failure_netbanking_high"
-  },
-  {
-    "name": "unknown_upi_high",
-    "failure_category": "UNKNOWN",
-    "payment_method": "upi",
-    "amount_range": "HIGH",
     "customer_type": "NEW",
-    "description": "Synthetic segment for unknown_upi_high"
+    "description": "Canonical 4D segment for repeated_failure_upi_premium_new"
   },
   {
-    "name": "insufficient_funds_upi_mid",
+    "name": "insufficient_funds_card_low_returning",
     "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "upi",
-    "amount_range": "MID",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for insufficient_funds_upi_mid"
-  },
-  {
-    "name": "repeated_failure_netbanking_mid",
-    "failure_category": "REPEATED_FAILURE",
-    "payment_method": "netbanking",
-    "amount_range": "MID",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for repeated_failure_netbanking_mid"
-  },
-  {
-    "name": "insufficient_funds_upi_low",
-    "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "upi",
+    "payment_method": "card",
     "amount_range": "LOW",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for insufficient_funds_upi_low"
+    "description": "Canonical 4D segment for insufficient_funds_card_low_returning"
   },
   {
-    "name": "insufficient_funds_wallet_mid",
+    "name": "insufficient_funds_upi_high_new",
     "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "wallet",
-    "amount_range": "MID",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
     "customer_type": "NEW",
-    "description": "Synthetic segment for insufficient_funds_wallet_mid"
+    "description": "Canonical 4D segment for insufficient_funds_upi_high_new"
   },
   {
-    "name": "checkout_abandonment_upi_mid",
+    "name": "repeated_failure_wallet_low_new",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "wallet",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for repeated_failure_wallet_low_new"
+  },
+  {
+    "name": "checkout_abandonment_card_low_returning",
     "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "card",
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for checkout_abandonment_card_low_returning"
+  },
+  {
+    "name": "insufficient_funds_upi_mid_new",
+    "failure_category": "INSUFFICIENT_FUNDS",
     "payment_method": "upi",
     "amount_range": "MID",
     "customer_type": "NEW",
-    "description": "Synthetic segment for checkout_abandonment_upi_mid"
+    "description": "Canonical 4D segment for insufficient_funds_upi_mid_new"
   },
   {
-    "name": "checkout_abandonment_any_low",
+    "name": "repeated_failure_wallet_mid_fatigued",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "wallet",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for repeated_failure_wallet_mid_fatigued"
+  },
+  {
+    "name": "checkout_abandonment_any_low_new",
     "failure_category": "CHECKOUT_ABANDONMENT",
     "payment_method": null,
     "amount_range": "LOW",
     "customer_type": "NEW",
-    "description": "Synthetic segment for checkout_abandonment_any_low"
+    "description": "Canonical 4D segment for checkout_abandonment_any_low_new"
   },
   {
-    "name": "network_failure_netbanking_high",
-    "failure_category": "NETWORK_FAILURE",
-    "payment_method": "netbanking",
-    "amount_range": "HIGH",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for network_failure_netbanking_high"
-  },
-  {
-    "name": "repeated_failure_card_low",
-    "failure_category": "REPEATED_FAILURE",
-    "payment_method": "card",
-    "amount_range": "LOW",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for repeated_failure_card_low"
-  },
-  {
-    "name": "authentication_failure_card_premium",
+    "name": "authentication_failure_card_premium_fatigued",
     "failure_category": "AUTHENTICATION_FAILURE",
     "payment_method": "card",
     "amount_range": "PREMIUM",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for authentication_failure_card_premium"
-  },
-  {
-    "name": "insufficient_funds_card_low",
-    "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "card",
-    "amount_range": "LOW",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for insufficient_funds_card_low"
-  },
-  {
-    "name": "checkout_abandonment_card_high",
-    "failure_category": "CHECKOUT_ABANDONMENT",
-    "payment_method": "card",
-    "amount_range": "HIGH",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for checkout_abandonment_card_high"
-  },
-  {
-    "name": "authentication_failure_upi_mid",
-    "failure_category": "AUTHENTICATION_FAILURE",
-    "payment_method": "upi",
-    "amount_range": "MID",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for authentication_failure_upi_mid"
-  },
-  {
-    "name": "insufficient_funds_card_mid",
-    "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "card",
-    "amount_range": "MID",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for insufficient_funds_card_mid"
-  },
-  {
-    "name": "authentication_failure_upi_high",
-    "failure_category": "AUTHENTICATION_FAILURE",
-    "payment_method": "upi",
-    "amount_range": "HIGH",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for authentication_failure_upi_high"
-  },
-  {
-    "name": "network_failure_upi_mid",
-    "failure_category": "NETWORK_FAILURE",
-    "payment_method": "upi",
-    "amount_range": "MID",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for network_failure_upi_mid"
-  },
-  {
-    "name": "insufficient_funds_netbanking_mid",
-    "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "netbanking",
-    "amount_range": "MID",
     "customer_type": "FATIGUED",
-    "description": "Synthetic segment for insufficient_funds_netbanking_mid"
+    "description": "Canonical 4D segment for authentication_failure_card_premium_fatigued"
   },
   {
-    "name": "network_failure_card_premium",
-    "failure_category": "NETWORK_FAILURE",
-    "payment_method": "card",
-    "amount_range": "PREMIUM",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for network_failure_card_premium"
-  },
-  {
-    "name": "checkout_abandonment_upi_high",
-    "failure_category": "CHECKOUT_ABANDONMENT",
-    "payment_method": "upi",
-    "amount_range": "HIGH",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for checkout_abandonment_upi_high"
-  },
-  {
-    "name": "authentication_failure_wallet_low",
-    "failure_category": "AUTHENTICATION_FAILURE",
-    "payment_method": "wallet",
-    "amount_range": "LOW",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for authentication_failure_wallet_low"
-  },
-  {
-    "name": "authentication_failure_netbanking_mid",
-    "failure_category": "AUTHENTICATION_FAILURE",
-    "payment_method": "netbanking",
-    "amount_range": "MID",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for authentication_failure_netbanking_mid"
-  },
-  {
-    "name": "bank_timeout_card_premium",
+    "name": "bank_timeout_card_low_new",
     "failure_category": "BANK_TIMEOUT",
     "payment_method": "card",
-    "amount_range": "PREMIUM",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for bank_timeout_card_premium"
-  },
-  {
-    "name": "repeated_failure_netbanking_low",
-    "failure_category": "REPEATED_FAILURE",
-    "payment_method": "netbanking",
     "amount_range": "LOW",
     "customer_type": "NEW",
-    "description": "Synthetic segment for repeated_failure_netbanking_low"
+    "description": "Canonical 4D segment for bank_timeout_card_low_new"
   },
   {
-    "name": "unknown_card_low",
+    "name": "bank_timeout_upi_high_returning",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for bank_timeout_upi_high_returning"
+  },
+  {
+    "name": "checkout_abandonment_upi_mid_returning",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for checkout_abandonment_upi_mid_returning"
+  },
+  {
+    "name": "network_failure_upi_mid_new",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for network_failure_upi_mid_new"
+  },
+  {
+    "name": "insufficient_funds_netbanking_premium_fatigued",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "netbanking",
+    "amount_range": "PREMIUM",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for insufficient_funds_netbanking_premium_fatigued"
+  },
+  {
+    "name": "authentication_failure_netbanking_high_new",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for authentication_failure_netbanking_high_new"
+  },
+  {
+    "name": "network_failure_card_high_new",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "card",
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for network_failure_card_high_new"
+  },
+  {
+    "name": "unknown_card_high_returning",
     "failure_category": "UNKNOWN",
     "payment_method": "card",
-    "amount_range": "LOW",
+    "amount_range": "HIGH",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for unknown_card_low"
+    "description": "Canonical 4D segment for unknown_card_high_returning"
   },
   {
-    "name": "bank_timeout_netbanking_low",
+    "name": "insufficient_funds_upi_mid_fatigued",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for insufficient_funds_upi_mid_fatigued"
+  },
+  {
+    "name": "bank_timeout_upi_mid_fatigued",
     "failure_category": "BANK_TIMEOUT",
-    "payment_method": "netbanking",
-    "amount_range": "LOW",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for bank_timeout_netbanking_low"
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for bank_timeout_upi_mid_fatigued"
   },
   {
-    "name": "network_failure_netbanking_premium",
-    "failure_category": "NETWORK_FAILURE",
-    "payment_method": "netbanking",
-    "amount_range": "PREMIUM",
+    "name": "bank_timeout_card_high_new",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "card",
+    "amount_range": "HIGH",
     "customer_type": "NEW",
-    "description": "Synthetic segment for network_failure_netbanking_premium"
+    "description": "Canonical 4D segment for bank_timeout_card_high_new"
   },
   {
-    "name": "repeated_failure_wallet_mid",
-    "failure_category": "REPEATED_FAILURE",
-    "payment_method": "wallet",
+    "name": "insufficient_funds_card_mid_new",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "card",
     "amount_range": "MID",
     "customer_type": "NEW",
-    "description": "Synthetic segment for repeated_failure_wallet_mid"
+    "description": "Canonical 4D segment for insufficient_funds_card_mid_new"
   },
   {
-    "name": "bank_timeout_card_high",
-    "failure_category": "BANK_TIMEOUT",
-    "payment_method": "card",
-    "amount_range": "HIGH",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for bank_timeout_card_high"
-  },
-  {
-    "name": "unknown_upi_low",
-    "failure_category": "UNKNOWN",
-    "payment_method": "upi",
-    "amount_range": "LOW",
-    "customer_type": "FATIGUED",
-    "description": "Synthetic segment for unknown_upi_low"
-  },
-  {
-    "name": "insufficient_funds_card_premium",
-    "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "card",
-    "amount_range": "PREMIUM",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for insufficient_funds_card_premium"
-  },
-  {
-    "name": "authentication_failure_netbanking_low",
-    "failure_category": "AUTHENTICATION_FAILURE",
-    "payment_method": "netbanking",
-    "amount_range": "LOW",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for authentication_failure_netbanking_low"
-  },
-  {
-    "name": "checkout_abandonment_upi_premium",
-    "failure_category": "CHECKOUT_ABANDONMENT",
-    "payment_method": "upi",
-    "amount_range": "PREMIUM",
-    "customer_type": "FATIGUED",
-    "description": "Synthetic segment for checkout_abandonment_upi_premium"
-  },
-  {
-    "name": "network_failure_upi_premium",
+    "name": "network_failure_netbanking_mid_fatigued",
     "failure_category": "NETWORK_FAILURE",
-    "payment_method": "upi",
-    "amount_range": "PREMIUM",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for network_failure_upi_premium"
+    "payment_method": "netbanking",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for network_failure_netbanking_mid_fatigued"
   },
   {
-    "name": "repeated_failure_wallet_low",
+    "name": "repeated_failure_wallet_premium_new",
     "failure_category": "REPEATED_FAILURE",
     "payment_method": "wallet",
-    "amount_range": "LOW",
+    "amount_range": "PREMIUM",
     "customer_type": "NEW",
-    "description": "Synthetic segment for repeated_failure_wallet_low"
+    "description": "Canonical 4D segment for repeated_failure_wallet_premium_new"
   },
   {
-    "name": "network_failure_upi_low",
-    "failure_category": "NETWORK_FAILURE",
+    "name": "repeated_failure_upi_mid_returning",
+    "failure_category": "REPEATED_FAILURE",
     "payment_method": "upi",
-    "amount_range": "LOW",
+    "amount_range": "MID",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for network_failure_upi_low"
+    "description": "Canonical 4D segment for repeated_failure_upi_mid_returning"
   },
   {
-    "name": "insufficient_funds_upi_high",
-    "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "upi",
-    "amount_range": "HIGH",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for insufficient_funds_upi_high"
-  },
-  {
-    "name": "checkout_abandonment_any_premium",
+    "name": "checkout_abandonment_any_premium_returning",
     "failure_category": "CHECKOUT_ABANDONMENT",
     "payment_method": null,
     "amount_range": "PREMIUM",
-    "customer_type": "NEW",
-    "description": "Synthetic segment for checkout_abandonment_any_premium"
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for checkout_abandonment_any_premium_returning"
   },
   {
-    "name": "unknown_card_mid",
-    "failure_category": "UNKNOWN",
+    "name": "authentication_failure_netbanking_mid_fatigued",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for authentication_failure_netbanking_mid_fatigued"
+  },
+  {
+    "name": "authentication_failure_card_high_fatigued",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "card",
+    "amount_range": "HIGH",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for authentication_failure_card_high_fatigued"
+  },
+  {
+    "name": "checkout_abandonment_card_premium_returning",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "card",
+    "amount_range": "PREMIUM",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for checkout_abandonment_card_premium_returning"
+  },
+  {
+    "name": "authentication_failure_card_low_fatigued",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "card",
+    "amount_range": "LOW",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for authentication_failure_card_low_fatigued"
+  },
+  {
+    "name": "insufficient_funds_upi_premium_fatigued",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "upi",
+    "amount_range": "PREMIUM",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for insufficient_funds_upi_premium_fatigued"
+  },
+  {
+    "name": "authentication_failure_upi_low_fatigued",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for authentication_failure_upi_low_fatigued"
+  },
+  {
+    "name": "authentication_failure_upi_low_new",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for authentication_failure_upi_low_new"
+  },
+  {
+    "name": "repeated_failure_upi_low_returning",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for repeated_failure_upi_low_returning"
+  },
+  {
+    "name": "insufficient_funds_card_mid_fatigued",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for insufficient_funds_card_mid_fatigued"
+  },
+  {
+    "name": "bank_timeout_card_mid_returning",
+    "failure_category": "BANK_TIMEOUT",
     "payment_method": "card",
     "amount_range": "MID",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for unknown_card_mid"
+    "description": "Canonical 4D segment for bank_timeout_card_mid_returning"
   },
   {
-    "name": "insufficient_funds_netbanking_high",
-    "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "netbanking",
-    "amount_range": "HIGH",
-    "customer_type": "FATIGUED",
-    "description": "Synthetic segment for insufficient_funds_netbanking_high"
-  },
-  {
-    "name": "insufficient_funds_wallet_high",
-    "failure_category": "INSUFFICIENT_FUNDS",
-    "payment_method": "wallet",
-    "amount_range": "HIGH",
-    "customer_type": "RETURNING",
-    "description": "Synthetic segment for insufficient_funds_wallet_high"
-  },
-  {
-    "name": "authentication_failure_netbanking_premium",
+    "name": "authentication_failure_wallet_mid_new",
     "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "wallet",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for authentication_failure_wallet_mid_new"
+  },
+  {
+    "name": "bank_timeout_card_premium_new",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "card",
+    "amount_range": "PREMIUM",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for bank_timeout_card_premium_new"
+  },
+  {
+    "name": "authentication_failure_netbanking_mid_returning",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for authentication_failure_netbanking_mid_returning"
+  },
+  {
+    "name": "bank_timeout_wallet_mid_new",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "wallet",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for bank_timeout_wallet_mid_new"
+  },
+  {
+    "name": "insufficient_funds_card_low_new",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "card",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for insufficient_funds_card_low_new"
+  },
+  {
+    "name": "checkout_abandonment_any_low_returning",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": null,
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for checkout_abandonment_any_low_returning"
+  },
+  {
+    "name": "repeated_failure_netbanking_premium_returning",
+    "failure_category": "REPEATED_FAILURE",
     "payment_method": "netbanking",
     "amount_range": "PREMIUM",
     "customer_type": "RETURNING",
-    "description": "Synthetic segment for authentication_failure_netbanking_premium"
+    "description": "Canonical 4D segment for repeated_failure_netbanking_premium_returning"
+  },
+  {
+    "name": "repeated_failure_card_premium_new",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "card",
+    "amount_range": "PREMIUM",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for repeated_failure_card_premium_new"
+  },
+  {
+    "name": "unknown_card_mid_fatigued",
+    "failure_category": "UNKNOWN",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for unknown_card_mid_fatigued"
+  },
+  {
+    "name": "repeated_failure_card_premium_returning",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "card",
+    "amount_range": "PREMIUM",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for repeated_failure_card_premium_returning"
+  },
+  {
+    "name": "checkout_abandonment_upi_high_new",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for checkout_abandonment_upi_high_new"
+  },
+  {
+    "name": "repeated_failure_netbanking_high_new",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for repeated_failure_netbanking_high_new"
+  },
+  {
+    "name": "authentication_failure_card_premium_new",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "card",
+    "amount_range": "PREMIUM",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for authentication_failure_card_premium_new"
+  },
+  {
+    "name": "bank_timeout_upi_low_fatigued",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for bank_timeout_upi_low_fatigued"
+  },
+  {
+    "name": "insufficient_funds_wallet_mid_returning",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "wallet",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for insufficient_funds_wallet_mid_returning"
+  },
+  {
+    "name": "authentication_failure_netbanking_low_returning",
+    "failure_category": "AUTHENTICATION_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for authentication_failure_netbanking_low_returning"
+  },
+  {
+    "name": "network_failure_wallet_mid_fatigued",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "wallet",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for network_failure_wallet_mid_fatigued"
+  },
+  {
+    "name": "unknown_upi_high_new",
+    "failure_category": "UNKNOWN",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for unknown_upi_high_new"
+  },
+  {
+    "name": "checkout_abandonment_upi_low_fatigued",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for checkout_abandonment_upi_low_fatigued"
+  },
+  {
+    "name": "checkout_abandonment_upi_high_returning",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for checkout_abandonment_upi_high_returning"
+  },
+  {
+    "name": "repeated_failure_card_mid_fatigued",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for repeated_failure_card_mid_fatigued"
+  },
+  {
+    "name": "unknown_card_premium_returning",
+    "failure_category": "UNKNOWN",
+    "payment_method": "card",
+    "amount_range": "PREMIUM",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for unknown_card_premium_returning"
+  },
+  {
+    "name": "bank_timeout_card_mid_fatigued",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for bank_timeout_card_mid_fatigued"
+  },
+  {
+    "name": "insufficient_funds_netbanking_mid_fatigued",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "netbanking",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for insufficient_funds_netbanking_mid_fatigued"
+  },
+  {
+    "name": "network_failure_card_mid_returning",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for network_failure_card_mid_returning"
+  },
+  {
+    "name": "bank_timeout_card_mid_new",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for bank_timeout_card_mid_new"
+  },
+  {
+    "name": "network_failure_card_mid_new",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for network_failure_card_mid_new"
+  },
+  {
+    "name": "checkout_abandonment_card_low_new",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "card",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for checkout_abandonment_card_low_new"
+  },
+  {
+    "name": "insufficient_funds_wallet_premium_new",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "wallet",
+    "amount_range": "PREMIUM",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for insufficient_funds_wallet_premium_new"
+  },
+  {
+    "name": "checkout_abandonment_upi_low_new",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for checkout_abandonment_upi_low_new"
+  },
+  {
+    "name": "network_failure_upi_mid_returning",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for network_failure_upi_mid_returning"
+  },
+  {
+    "name": "repeated_failure_card_low_new",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "card",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for repeated_failure_card_low_new"
+  },
+  {
+    "name": "bank_timeout_wallet_mid_returning",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "wallet",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for bank_timeout_wallet_mid_returning"
+  },
+  {
+    "name": "network_failure_netbanking_high_fatigued",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "HIGH",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for network_failure_netbanking_high_fatigued"
+  },
+  {
+    "name": "unknown_upi_low_returning",
+    "failure_category": "UNKNOWN",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for unknown_upi_low_returning"
+  },
+  {
+    "name": "unknown_upi_mid_new",
+    "failure_category": "UNKNOWN",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for unknown_upi_mid_new"
+  },
+  {
+    "name": "insufficient_funds_upi_premium_new",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "upi",
+    "amount_range": "PREMIUM",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for insufficient_funds_upi_premium_new"
+  },
+  {
+    "name": "insufficient_funds_upi_low_fatigued",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for insufficient_funds_upi_low_fatigued"
+  },
+  {
+    "name": "repeated_failure_upi_premium_fatigued",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "PREMIUM",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for repeated_failure_upi_premium_fatigued"
+  },
+  {
+    "name": "insufficient_funds_card_mid_returning",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "card",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for insufficient_funds_card_mid_returning"
+  },
+  {
+    "name": "checkout_abandonment_any_high_returning",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": null,
+    "amount_range": "HIGH",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for checkout_abandonment_any_high_returning"
+  },
+  {
+    "name": "repeated_failure_upi_mid_new",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for repeated_failure_upi_mid_new"
+  },
+  {
+    "name": "bank_timeout_card_high_returning",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "card",
+    "amount_range": "HIGH",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for bank_timeout_card_high_returning"
+  },
+  {
+    "name": "repeated_failure_upi_high_fatigued",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for repeated_failure_upi_high_fatigued"
+  },
+  {
+    "name": "network_failure_wallet_mid_returning",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "wallet",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for network_failure_wallet_mid_returning"
+  },
+  {
+    "name": "insufficient_funds_card_high_new",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "card",
+    "amount_range": "HIGH",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for insufficient_funds_card_high_new"
+  },
+  {
+    "name": "bank_timeout_netbanking_mid_fatigued",
+    "failure_category": "BANK_TIMEOUT",
+    "payment_method": "netbanking",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for bank_timeout_netbanking_mid_fatigued"
+  },
+  {
+    "name": "checkout_abandonment_upi_premium_new",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "upi",
+    "amount_range": "PREMIUM",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for checkout_abandonment_upi_premium_new"
+  },
+  {
+    "name": "repeated_failure_upi_premium_returning",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "PREMIUM",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for repeated_failure_upi_premium_returning"
+  },
+  {
+    "name": "unknown_upi_high_returning",
+    "failure_category": "UNKNOWN",
+    "payment_method": "upi",
+    "amount_range": "HIGH",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for unknown_upi_high_returning"
+  },
+  {
+    "name": "checkout_abandonment_upi_low_returning",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": "upi",
+    "amount_range": "LOW",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for checkout_abandonment_upi_low_returning"
+  },
+  {
+    "name": "insufficient_funds_card_high_fatigued",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "card",
+    "amount_range": "HIGH",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for insufficient_funds_card_high_fatigued"
+  },
+  {
+    "name": "insufficient_funds_netbanking_low_new",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "netbanking",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for insufficient_funds_netbanking_low_new"
+  },
+  {
+    "name": "checkout_abandonment_any_mid_new",
+    "failure_category": "CHECKOUT_ABANDONMENT",
+    "payment_method": null,
+    "amount_range": "MID",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for checkout_abandonment_any_mid_new"
+  },
+  {
+    "name": "network_failure_netbanking_low_new",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "LOW",
+    "customer_type": "NEW",
+    "description": "Canonical 4D segment for network_failure_netbanking_low_new"
+  },
+  {
+    "name": "insufficient_funds_netbanking_mid_returning",
+    "failure_category": "INSUFFICIENT_FUNDS",
+    "payment_method": "netbanking",
+    "amount_range": "MID",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for insufficient_funds_netbanking_mid_returning"
+  },
+  {
+    "name": "network_failure_netbanking_premium_returning",
+    "failure_category": "NETWORK_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "PREMIUM",
+    "customer_type": "RETURNING",
+    "description": "Canonical 4D segment for network_failure_netbanking_premium_returning"
+  },
+  {
+    "name": "repeated_failure_upi_mid_fatigued",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "upi",
+    "amount_range": "MID",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for repeated_failure_upi_mid_fatigued"
+  },
+  {
+    "name": "repeated_failure_netbanking_low_fatigued",
+    "failure_category": "REPEATED_FAILURE",
+    "payment_method": "netbanking",
+    "amount_range": "LOW",
+    "customer_type": "FATIGUED",
+    "description": "Canonical 4D segment for repeated_failure_netbanking_low_fatigued"
   }
 ]

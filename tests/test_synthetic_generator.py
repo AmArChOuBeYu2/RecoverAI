@@ -1,7 +1,7 @@
 """
 Comprehensive Automated Test Suite for Milestone 7 — Synthetic Data Generator & Evaluation Dataset
-Validates determinism, schema integrity, enum validity, history consistency, temporal splits,
-anti-leakage boundaries, sample-size tier coverage, boundary edge cases, and Case G trap scenario.
+Validates determinism, canonical 4D segment identity, schema integrity, enum validity, history consistency,
+temporal splits, anti-leakage boundaries, sample-size tier coverage, boundary edge cases, and Case G trap scenario.
 """
 
 import os
@@ -10,6 +10,7 @@ import pytest
 from pathlib import Path
 from backend.seed.config import GeneratorConfig
 from backend.seed.generator import run_synthetic_generation
+from backend.seed.transactions import derive_canonical_segment_name
 from backend.seed.validation import validate_synthetic_dataset
 from backend.models.enums import (
     FailureCategory,
@@ -126,14 +127,28 @@ def test_customer_history_consistency(tmp_path):
         assert c["previous_recovered_payment_count"] <= c["previous_failed_payment_count"]
         assert c["contacts_count_24h"] >= 0
 
-def test_segment_derivation(tmp_path):
-    """Test 9: Segment names follow deterministic naming conventions."""
+def test_canonical_4d_segment_derivation(tmp_path):
+    """Test 9: Canonical 4D segment names incorporate customer_type."""
     config = GeneratorConfig(seed=20260904, total_transactions=500)
     res = run_synthetic_generation(config, tmp_path)
 
     for txn in res["train_transactions"]:
-        expected = f"{txn['failure_category'].lower()}_{txn['payment_method'] or 'any'}_{txn['amount_range'].lower()}"
+        expected = derive_canonical_segment_name(
+            txn["failure_category"],
+            txn["payment_method"],
+            txn["amount_range"],
+            txn["customer_type"],
+        )
         assert txn["segment_name"] == expected
+
+def test_customer_type_in_canonical_segment_identity():
+    """REQUIREMENT 10: Two otherwise identical transactions with different customer_type belong to different canonical segments."""
+    seg1 = derive_canonical_segment_name("AUTHENTICATION_FAILURE", "card", "MID", "RETURNING")
+    seg2 = derive_canonical_segment_name("AUTHENTICATION_FAILURE", "card", "MID", "FATIGUED")
+
+    assert seg1 == "authentication_failure_card_mid_returning"
+    assert seg2 == "authentication_failure_card_mid_fatigued"
+    assert seg1 != seg2
 
 def test_sample_size_tier_coverage(tmp_path):
     """Test 10: All 4 sample size tiers (INSUFFICIENT, LOW, MEDIUM, HIGH) exist in dataset."""
@@ -145,6 +160,17 @@ def test_sample_size_tier_coverage(tmp_path):
     assert tiers["LOW"] > 0
     assert tiers["MEDIUM"] > 0
     assert tiers["HIGH"] > 0
+
+def test_sparse_segment_triggers_fallback_protection(tmp_path):
+    """REQUIREMENT 11: Sparse segments (<10 txns) fall into INSUFFICIENT tier to exercise sample-size protections."""
+    config = GeneratorConfig(seed=20260904, total_transactions=500)
+    res = run_synthetic_generation(config, tmp_path)
+
+    from collections import Counter
+    segment_counts = Counter(t["segment_name"] for t in res["train_transactions"])
+    sparse_segments = [seg for seg, count in segment_counts.items() if count < 10]
+
+    assert len(sparse_segments) > 0, "Dataset must contain sparse segments to exercise fallback protections."
 
 def test_temporal_split_correctness(tmp_path):
     """Test 13: 80/20 chronological split without future leakage."""
