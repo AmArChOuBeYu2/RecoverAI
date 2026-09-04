@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # Safety & Execution Controls
     MAX_REAL_PAYMENT_LINKS: int = 10
     SIMULATE_OPENAI_FAILURE: bool = False
+    SIMULATE_GEMINI_FAILURE: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env",
