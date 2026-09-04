@@ -1,0 +1,83 @@
+"""
+RecoverAI Domain Enums
+"""
+
+from enum import Enum
+
+class TransactionStatus(str, Enum):
+    FAILED = "FAILED"
+    CREATED = "CREATED"
+    AUTHORIZED = "AUTHORIZED"
+    CAPTURED = "CAPTURED"
+    REFUNDED = "REFUNDED"
+
+class FailureCategory(str, Enum):
+    AUTHENTICATION_FAILURE = "AUTHENTICATION_FAILURE"
+    BANK_TIMEOUT = "BANK_TIMEOUT"
+    NETWORK_FAILURE = "NETWORK_FAILURE"
+    INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS"
+    CHECKOUT_ABANDONMENT = "CHECKOUT_ABANDONMENT"
+    REPEATED_FAILURE = "REPEATED_FAILURE"
+    BUSINESS_ERROR = "BUSINESS_ERROR"
+    UNKNOWN = "UNKNOWN"
+
+class RecoveryCaseStatus(str, Enum):
+    DETECTED = "DETECTED"
+    ANALYZED = "ANALYZED"
+    SEGMENTED = "SEGMENTED"
+    INELIGIBLE = "INELIGIBLE"
+    ELIGIBLE = "ELIGIBLE"
+    STRATEGIES_EVALUATED = "STRATEGIES_EVALUATED"
+    POLICY_APPROVED = "POLICY_APPROVED"
+    POLICY_BLOCKED = "POLICY_BLOCKED"
+    ACTION_ATTEMPTED = "ACTION_ATTEMPTED"
+    AWAITING_VERIFICATION = "AWAITING_VERIFICATION"
+    RECOVERED = "RECOVERED"
+    UNRECOVERED = "UNRECOVERED"
+    ESCALATED = "ESCALATED"
+
+class StrategyType(str, Enum):
+    PAYMENT_LINK = "PAYMENT_LINK"
+    RETRY = "RETRY"
+    REMINDER = "REMINDER"
+    DELAYED_RETRY = "DELAYED_RETRY"
+    METHOD_SWITCH = "METHOD_SWITCH"
+    NO_ACTION = "NO_ACTION"
+    HUMAN_REVIEW = "HUMAN_REVIEW"
+
+class DataCategory(str, Enum):
+    OBSERVED = "OBSERVED"
+    VERIFIED = "VERIFIED"
+    SIMULATED = "SIMULATED"
+    PROJECTED = "PROJECTED"
+
+class ConfidenceLevel(str, Enum):
+    INSUFFICIENT = "INSUFFICIENT"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+class ActionExecutionMode(str, Enum):
+    REAL_TEST_MODE = "REAL_TEST_MODE"
+    SIMULATED = "SIMULATED"
+
+class OutcomeSource(str, Enum):
+    VERIFIED = "VERIFIED"
+    SIMULATED = "SIMULATED"
+    PROJECTED = "PROJECTED"
+
+class PolicyDecisionType(str, Enum):
+    APPROVE = "APPROVE"
+    DENY = "DENY"
+    ESCALATE = "ESCALATE"
+
+class AmountRange(str, Enum):
+    LOW = "LOW"             # < ₹500
+    MID = "MID"             # ₹500 - ₹5,000
+    HIGH = "HIGH"           # ₹5,000 - ₹50,000
+    PREMIUM = "PREMIUM"     # > ₹50,000
+
+class CustomerType(str, Enum):
+    NEW = "NEW"
+    RETURNING = "RETURNING"
+    FATIGUED = "FATIGUED"
