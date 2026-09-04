@@ -19,6 +19,7 @@ from backend.models.enums import (
     DataCategory,
     EvidenceProvenance,
     RecommendationType,
+    OutcomeSource,
 )
 from backend.services.strategy_aggregator import StrategyAggregator
 from backend.services.strategy_ranker import StrategyRanker
@@ -175,8 +176,16 @@ class StrategyOptimizer:
         # Fetch strategies stored on segment
         strats = db.query(RecoveryStrategy).filter_by(segment_id=segment.id).all()
 
-        # Query all strategy outcomes for database
-        raw_outcomes = db.query(StrategyOutcome).all()
+        # Query empirical strategy outcomes strictly from VERIFIED/OBSERVED sources
+        raw_outcomes = (
+            db.query(StrategyOutcome)
+            .filter(StrategyOutcome.outcome_source.in_([
+                OutcomeSource.VERIFIED.value,
+                DataCategory.OBSERVED.value,
+                "TEST_MODE_VERIFIED",
+            ]))
+            .all()
+        )
         outcomes_data = []
         for o in raw_outcomes:
             seg_name = ""
@@ -243,8 +252,16 @@ class StrategyOptimizer:
         ar_upper = (amount_range or "MID").upper()
         ct_upper = (customer_type or "NEW").upper()
 
-        # Query strategy outcomes from DB
-        raw_outcomes = db.query(StrategyOutcome).all()
+        # Query strategy outcomes from DB strictly for empirical sources (VERIFIED/OBSERVED)
+        raw_outcomes = (
+            db.query(StrategyOutcome)
+            .filter(StrategyOutcome.outcome_source.in_([
+                OutcomeSource.VERIFIED.value,
+                DataCategory.OBSERVED.value,
+                "TEST_MODE_VERIFIED",
+            ]))
+            .all()
+        )
         outcomes_data = []
         for o in raw_outcomes:
             seg_name = ""

@@ -293,3 +293,98 @@ def test_api_verify_endpoint_nonexistent_case():
     res = client.post("/api/recovery/nonexistent_case_99999/verify")
     assert res.status_code == 404
     assert "not found" in res.json()["detail"]
+
+def test_simulated_outcomes_do_not_contaminate_empirical_metrics(db_session):
+    """CRITICAL: Verify SIMULATED outcomes do NOT modify RecoveryStrategy empirical metrics used by StrategyRanker."""
+    case, action, seg = create_sample_action_for_verification(
+        db_session, execution_mode=ActionExecutionMode.SIMULATED.value
+    )
+
+    v_res = VerificationResult(
+        case_id=case.id,
+        action_id=action.id,
+        outcome="RECOVERED",
+        amount_recovered_paise=200000,
+        outcome_source=OutcomeSource.SIMULATED.value,
+        details={"simulation": True},
+    )
+
+    attr_res = OutcomeAttributionService.attribute_verification_result(db_session, case, action, v_res)
+
+    assert attr_res["attributed"] is True
+    assert attr_res["outcome_source"] == OutcomeSource.SIMULATED.value
+    assert case.status == RecoveryCaseStatus.RECOVERED.value
+
+    # Verify StrategyOutcome database record exists
+    outcome = db_session.query(StrategyOutcome).filter_by(recovery_case_id=case.id).first()
+    assert outcome is not None
+    assert outcome.outcome_source == OutcomeSource.SIMULATED.value
+
+    # Verify RecoveryStrategy empirical metrics remain UNCHANGED (0 attempts)
+    strat = db_session.query(RecoveryStrategy).filter_by(segment_id=seg.id, strategy_type=action.action_type).first()
+    assert strat is None or strat.attempt_count == 0
+
+def test_verification_idempotency_and_terminal_protection(db_session):
+    """Verify repeated verification returns attributed=False, does not duplicate outcomes or increment metrics."""
+    case, action, seg = create_sample_action_for_verification(
+        db_session, execution_mode=ActionExecutionMode.REAL_TEST_MODE.value, razorpay_payment_link_id="plink_idem_123"
+    )
+
+    v_res = VerificationResult(
+        case_id=case.id,
+        action_id=action.id,
+        outcome="RECOVERED",
+        amount_recovered_paise=200000,
+        outcome_source=OutcomeSource.VERIFIED.value,
+        details={"razorpay_status": "paid"},
+    )
+
+    # First attribution
+    attr1 = OutcomeAttributionService.attribute_verification_result(db_session, case, action, v_res)
+    assert attr1["attributed"] is True
+    assert case.status == RecoveryCaseStatus.RECOVERED.value
+
+    strat = db_session.query(RecoveryStrategy).filter_by(segment_id=seg.id, strategy_type=action.action_type).first()
+    assert strat.attempt_count == 1
+    assert strat.success_count == 1
+
+    # Second attribution (Idempotency test)
+    attr2 = OutcomeAttributionService.attribute_verification_result(db_session, case, action, v_res)
+    assert attr2["attributed"] is False
+    assert attr2["status"] == RecoveryCaseStatus.RECOVERED.value
+
+    # Metrics and StrategyOutcomes should remain at count=1
+    assert strat.attempt_count == 1
+    assert strat.success_count == 1
+    outcomes = db_session.query(StrategyOutcome).filter_by(recovery_case_id=case.id).all()
+    assert len(outcomes) == 1
+
+def test_strategy_outcome_db_uniqueness(db_session):
+    """Verify database-level unique constraint prevents duplicate StrategyOutcome insertions for the same case."""
+    from sqlalchemy.exc import IntegrityError
+    case, action, seg = create_sample_action_for_verification(db_session)
+
+    o1 = StrategyOutcome(
+        recovery_case_id=case.id,
+        segment_id=seg.id,
+        strategy_type=action.action_type,
+        outcome="RECOVERED",
+        amount_recovered_paise=100000,
+        outcome_source=OutcomeSource.VERIFIED.value,
+    )
+    db_session.add(o1)
+    db_session.flush()
+
+    o2 = StrategyOutcome(
+        recovery_case_id=case.id,
+        segment_id=seg.id,
+        strategy_type=action.action_type,
+        outcome="RECOVERED",
+        amount_recovered_paise=100000,
+        outcome_source=OutcomeSource.VERIFIED.value,
+    )
+    db_session.add(o2)
+    with pytest.raises(IntegrityError):
+        db_session.flush()
+    db_session.rollback()
+

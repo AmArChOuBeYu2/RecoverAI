@@ -5,6 +5,7 @@ RecoveryDecision persistence, decision idempotency, state transitions, and REST 
 """
 
 import pytest
+import uuid
 from datetime import datetime, timezone, timedelta
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -193,12 +194,12 @@ def test_synthesis_sufficient_sample_empirical_override(db_session: Session):
     for i in range(15):
         outcome_status = "RECOVERED" if i < 12 else "UNRECOVERED"
         so = StrategyOutcome(
-            recovery_case_id=case.id,
+            recovery_case_id=f"hist_case_override_{i}_{uuid.uuid4().hex[:6]}",
             strategy_type="DELAYED_RETRY",
             segment_id=case.segment_id,
             outcome=outcome_status,
             amount_recovered_paise=150000 if outcome_status == "RECOVERED" else 0,
-            outcome_source="TEST_MODE_VERIFIED",
+            outcome_source="VERIFIED",
         )
         db_session.add(so)
     db_session.flush()
@@ -231,7 +232,14 @@ def test_synthesis_insufficient_sample_ai_guided(db_session: Session):
 
     # Only 2 historical outcomes (insufficient sample < 10)
     for i in range(2):
-        so = StrategyOutcome(recovery_case_id=case.id, strategy_type="METHOD_SWITCH", segment_id=case.segment_id, outcome="RECOVERED", amount_recovered_paise=150000, outcome_source="SIMULATED")
+        so = StrategyOutcome(
+            recovery_case_id=f"hist_case_guided_{i}_{uuid.uuid4().hex[:6]}",
+            strategy_type="METHOD_SWITCH",
+            segment_id=case.segment_id,
+            outcome="RECOVERED",
+            amount_recovered_paise=150000,
+            outcome_source="VERIFIED",
+        )
         db_session.add(so)
     db_session.flush()
 
@@ -392,7 +400,14 @@ def test_decision_time_immutability(db_session: Session):
 
     # Insert 20 future outcomes into DB
     for i in range(20):
-        so = StrategyOutcome(recovery_case_id=case.id, strategy_type="METHOD_SWITCH", segment_id=case.segment_id, outcome="RECOVERED", amount_recovered_paise=100000, outcome_source="SIMULATED")
+        so = StrategyOutcome(
+            recovery_case_id=f"immut_case_{i}_{uuid.uuid4().hex[:6]}",
+            strategy_type="METHOD_SWITCH",
+            segment_id=case.segment_id,
+            outcome="RECOVERED",
+            amount_recovered_paise=100000,
+            outcome_source="SIMULATED",
+        )
         db_session.add(so)
     db_session.flush()
 

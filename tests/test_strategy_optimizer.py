@@ -5,6 +5,7 @@ zero evidence handling, evidence provenance preservation, canonical segment comp
 """
 
 import pytest
+import uuid
 from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -70,7 +71,7 @@ def test_portfolio_attempt_weighted_aggregation(db_session: Session):
     # Strategy 1: 10 attempts, 2 recoveries (20% rate)
     for i in range(10):
         so = StrategyOutcome(
-            recovery_case_id=case.id,
+            recovery_case_id=f"hist_case_opt1_{i}_{uuid.uuid4().hex[:6]}",
             strategy_type="PAYMENT_LINK",
             segment_id=case.segment_id,
             outcome="RECOVERED" if i < 2 else "UNRECOVERED",
@@ -82,7 +83,7 @@ def test_portfolio_attempt_weighted_aggregation(db_session: Session):
     # Strategy 2: 2 attempts, 2 recoveries (100% rate)
     for i in range(2):
         so = StrategyOutcome(
-            recovery_case_id=case.id,
+            recovery_case_id=f"hist_case_opt2_{i}_{uuid.uuid4().hex[:6]}",
             strategy_type="METHOD_SWITCH",
             segment_id=case.segment_id,
             outcome="RECOVERED",

@@ -14,7 +14,7 @@ from backend.models.recovery_case import RecoveryCase
 from backend.models.recovery_decision import RecoveryDecision
 from backend.models.strategy_outcome import StrategyOutcome
 from backend.models.audit_event import AuditEvent
-from backend.models.enums import RecoveryCaseStatus, StrategyType, RecommendationType
+from backend.models.enums import RecoveryCaseStatus, StrategyType, RecommendationType, OutcomeSource, DataCategory
 from backend.services.diagnosis import DiagnosisService
 from backend.services.strategy_ranker import StrategyRanker
 from backend.services.eligibility import EligibilityChecker
@@ -76,8 +76,16 @@ class StrategyEngine:
         seg_ctx = context["segment"]
 
         # 4. Empirical Strategy Ranking Execution
-        # Retrieve historical strategy outcomes from database
-        raw_outcomes = db.query(StrategyOutcome).all()
+        # Retrieve historical strategy outcomes strictly from empirical evidence sources (VERIFIED / OBSERVED)
+        raw_outcomes = (
+            db.query(StrategyOutcome)
+            .filter(StrategyOutcome.outcome_source.in_([
+                OutcomeSource.VERIFIED.value,
+                DataCategory.OBSERVED.value,
+                "TEST_MODE_VERIFIED",
+            ]))
+            .all()
+        )
         outcomes_data = []
         for o in raw_outcomes:
             seg_name = ""

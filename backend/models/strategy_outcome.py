@@ -5,7 +5,7 @@ StrategyOutcome Database Model
 import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Integer, DateTime, ForeignKey
+from sqlalchemy import String, Integer, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.database.session import Base
 from backend.models.enums import OutcomeSource
@@ -18,6 +18,9 @@ if TYPE_CHECKING:
 class StrategyOutcome(Base):
     """Strategy Outcome attribution entity closing the learning loop."""
     __tablename__ = "strategy_outcomes"
+    __table_args__ = (
+        UniqueConstraint("recovery_case_id", name="uq_strategy_outcome_case"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     recovery_case_id: Mapped[str] = mapped_column(
