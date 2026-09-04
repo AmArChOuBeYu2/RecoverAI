@@ -17,6 +17,35 @@ from backend.services.eligibility import EligibilityChecker, EligibilityResult
 
 router = APIRouter(prefix="/api/recovery", tags=["recovery"])
 
+@router.post("/seed", response_model=Dict[str, Any])
+def seed_recovery_dataset(
+    count: int = Query(500, ge=10, le=2000, description="Number of synthetic transactions to seed"),
+    db: Session = Depends(get_db),
+):
+    """Seed synthetic transactions, customers, and canonical segments for evaluation."""
+    from backend.seed.generator import run_synthetic_generation
+    res = run_synthetic_generation(db=db)
+    created_txns = res.get("train_transactions", [])
+    return {
+        "status": "seeded",
+        "transactions_created": len(created_txns),
+        "message": f"Successfully seeded {len(created_txns)} synthetic transaction records into database.",
+    }
+
+@router.post("/run", response_model=Dict[str, Any])
+def run_recovery_orchestration_batch(
+    limit: int = Query(500, ge=1, le=1000, description="Max recovery cases to process in batch"),
+    db: Session = Depends(get_db),
+):
+    """
+    Execute end-to-end recovery pipeline batch run across all eligible cases.
+    Performs detection, segmentation, eligibility, strategy evaluation, policy safety gating,
+    action execution, authoritative outcome verification, and empirical outcome attribution.
+    """
+    from backend.services.orchestrator import OrchestratorService
+    res = OrchestratorService.run_batch(db, limit=limit)
+    return res
+
 @router.post("/detect", response_model=Dict[str, Any])
 def run_detection(
     limit: int = Query(500, ge=1, le=1000),
