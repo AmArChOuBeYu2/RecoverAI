@@ -34,6 +34,7 @@ from backend.services.executor import ActionExecutor, ActionExecutionError
 from backend.services.verification import VerificationService, VerificationResult
 from backend.services.outcome_attribution import OutcomeAttributionService
 from backend.services.policy_simulator import PolicySimulator
+from backend.services.orchestrator import OrchestratorService
 
 
 __all__ = [
@@ -55,6 +56,7 @@ __all__ = [
     "VerificationResult",
     "OutcomeAttributionService",
     "PolicySimulator",
+    "OrchestratorService",
     "calculate_wilson_lower_bound",
     "derive_sample_size_tier",
     "derive_confidence_level",

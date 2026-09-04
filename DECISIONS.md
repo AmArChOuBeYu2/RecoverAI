@@ -511,6 +511,19 @@ $$\text{Economic Strategy Value Score} = \text{Expected Recovered Value} \times 
 
 **Rationale:** Enables safe, non-disruptive policy evaluation and ROI projection across large transaction batches without impacting live recovery pipelines or financial integrations.
 
+---
+
+### DEC-040: Main Orchestrator Loop, Batch Run Tracking, and Fault Tolerance
+
+**Decision:** In Milestone 17:
+1. **Pipeline Orchestration**: `OrchestratorService` ties together all pipeline stages in sequence: Detection $\rightarrow$ Context Building $\rightarrow$ Segmentation $\rightarrow$ Eligibility $\rightarrow$ AI Diagnosis $\rightarrow$ Strategy Synthesis $\rightarrow$ Policy Gate $\rightarrow$ Action Execution $\rightarrow$ Verification $\rightarrow$ Outcome Attribution.
+2. **Batch Run Tracking**: Persists `BatchRun` records with execution status (`RUNNING`, `COMPLETED`, `COMPLETED_WITH_ERRORS`), processed transaction count, success count, and total recovered paise.
+3. **Per-Case Fault Tolerance**: Per-case `try...except` exception handling catches failures, logs `BATCH_PROCESSING_ERROR` audit events, and updates `error_count` without crashing the overall batch run.
+4. **State Machine Integrity & Idempotency**: Terminal cases (`RECOVERED`, `UNRECOVERED`, `INELIGIBLE`, `POLICY_BLOCKED`) are safely skipped unless `force_reprocess=True`, preserving strict state transitions (`STRATEGIES_EVALUATED` $\rightarrow$ `POLICY_APPROVED` $\rightarrow$ `ACTION_ATTEMPTED` $\rightarrow$ `AWAITING_VERIFICATION`).
+
+**Rationale:** Provides a resilient, end-to-end agentic workflow execution loop that processes multi-transaction payment recovery batches safely.
+
+
 
 
 

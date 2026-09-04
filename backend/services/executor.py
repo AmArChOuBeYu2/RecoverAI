@@ -101,6 +101,7 @@ class ActionExecutor:
         db: Session,
         case: RecoveryCase,
         decision: RecoveryDecision,
+        context: Optional[Dict[str, Any]] = None,
         actor: str = "SYSTEM",
     ) -> RecoveryAction:
         """
@@ -129,7 +130,7 @@ class ActionExecutor:
 
         # 2. TrustGate Safety check
         if case.transaction:
-            trust_res = TrustGateService.evaluate(case.transaction, case.customer)
+            trust_res = TrustGateService.evaluate(case.transaction, case.customer, context=context)
             if not trust_res.passed:
                 raise ActionAuthorizationError("TRUST_GATE_REJECTED", trust_res.reason)
 
@@ -139,6 +140,7 @@ class ActionExecutor:
             case=case,
             proposed_strategy=decision.selected_strategy,
             ai_confidence=decision.ai_confidence,
+            context=context,
             db=db,
             persist_decision=True,
         )

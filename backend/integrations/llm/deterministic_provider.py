@@ -56,7 +56,7 @@ class DeterministicFallbackProvider(LLMProvider):
             confidence = 0.90
             narrative = f"Customer experienced {category}. Payment link allows immediate retry with alternate method."
 
-        elif category in (FailureCategory.BANK_TIMEOUT.value, FailureCategory.GATEWAY_DOWNTIME.value):
+        elif category in (FailureCategory.BANK_TIMEOUT.value, FailureCategory.NETWORK_FAILURE.value):
             strategy = StrategyType.RETRY.value
             reasoning = "Deterministic rule: Infrastructure timeout indicates transient network condition."
             recoverability = 0.70
