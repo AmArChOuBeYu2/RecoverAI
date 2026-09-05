@@ -265,47 +265,53 @@ class ActionExecutor:
         customer_name = case.customer.name if case.customer else "Valued Customer"
 
         if execution_mode == ActionExecutionMode.REAL_TEST_MODE.value:
-            # 24-hour payment link expiry
-            expire_timestamp = int((datetime.now(timezone.utc) + timedelta(hours=24)).timestamp())
-            
-            link_req = CreatePaymentLinkRequest(
-                amount_paise=amount_paise,
-                currency=txn.currency if txn else "INR",
-                description=f"RecoverAI Payment Link for Case {case.id[:8]}",
-                reference_id=case.id,
-                customer_name=customer_name,
-                customer_email=customer_email,
-                customer_contact=customer_contact,
-                notify_sms=True,
-                notify_email=True,
-                reminder_enable=True,
-                expire_by=expire_timestamp,
-                notes={
-                    "recovery_case_id": case.id,
-                    "transaction_id": txn.id if txn else "",
-                    "strategy_type": StrategyType.PAYMENT_LINK.value,
-                },
-            )
+            try:
+                # 24-hour payment link expiry
+                expire_timestamp = int((datetime.now(timezone.utc) + timedelta(hours=24)).timestamp())
+                
+                link_req = CreatePaymentLinkRequest(
+                    amount_paise=amount_paise,
+                    currency=txn.currency if txn else "INR",
+                    description=f"Nivaran Payment Link for Case {case.id[:8]}",
+                    reference_id=case.id,
+                    customer_name=customer_name,
+                    customer_email=customer_email,
+                    customer_contact=customer_contact,
+                    notify_sms=True,
+                    notify_email=True,
+                    reminder_enable=True,
+                    expire_by=expire_timestamp,
+                    notes={
+                        "recovery_case_id": case.id,
+                        "transaction_id": txn.id if txn else "",
+                        "strategy_type": StrategyType.PAYMENT_LINK.value,
+                    },
+                )
 
-            link_res = self.payment_link_service.create_payment_link(link_req)
+                link_res = self.payment_link_service.create_payment_link(link_req)
 
-            action = RecoveryAction(
-                recovery_case_id=case.id,
-                action_type=StrategyType.PAYMENT_LINK.value,
-                execution_mode=ActionExecutionMode.REAL_TEST_MODE.value,
-                razorpay_payment_link_id=link_res.id,
-                payment_link_url=link_res.short_url,
-                status="SENT",
-                expires_at=datetime.fromtimestamp(expire_timestamp, timezone.utc) if expire_timestamp else None,
-                payload=sanitize_payload({
-                    "raw_response": link_res.raw_payload,
-                    "notification_mode": notification_mode,
-                    "amount_paise": amount_paise,
-                }),
-            )
-            db.add(action)
-            db.flush()
-            return action
+                action = RecoveryAction(
+                    recovery_case_id=case.id,
+                    action_type=StrategyType.PAYMENT_LINK.value,
+                    execution_mode=ActionExecutionMode.REAL_TEST_MODE.value,
+                    razorpay_payment_link_id=link_res.id,
+                    payment_link_url=link_res.short_url,
+                    status="SENT",
+                    expires_at=datetime.fromtimestamp(expire_timestamp, timezone.utc) if expire_timestamp else None,
+                    payload=sanitize_payload({
+                        "raw_response": link_res.raw_payload,
+                        "notification_mode": notification_mode,
+                        "amount_paise": amount_paise,
+                    }),
+                )
+                db.add(action)
+                db.flush()
+                return action
+            except Exception as err:
+                logger.warning(
+                    f"Real Razorpay payment link creation failed for case '{case.id}' ({err}). "
+                    "Falling back to SIMULATED payment link execution mode."
+                )
 
         # SIMULATED PAYMENT LINK EXECUTION
         sim_plink_id = f"plink_sim_{uuid.uuid4().hex[:12]}"

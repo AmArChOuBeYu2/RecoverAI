@@ -24,12 +24,16 @@ def seed_recovery_dataset(
 ):
     """Seed synthetic transactions, customers, and canonical segments for evaluation."""
     from backend.seed.generator import run_synthetic_generation
+    from backend.services.detection import DetectionEngine
     res = run_synthetic_generation(db=db)
     created_txns = res.get("train_transactions", [])
+    cases = DetectionEngine.detect_unhandled_failures(db, limit=len(created_txns))
+    db.commit()
     return {
         "status": "seeded",
         "transactions_created": len(created_txns),
-        "message": f"Successfully seeded {len(created_txns)} synthetic transaction records into database.",
+        "cases_detected": len(cases),
+        "message": f"Successfully seeded {len(created_txns)} synthetic transaction records and initialized {len(cases)} recovery cases into database.",
     }
 
 @router.post("/run", response_model=Dict[str, Any])
