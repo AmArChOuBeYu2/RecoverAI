@@ -61,7 +61,7 @@ export const HeroFunnelVisualization: React.FC<HeroFunnelProps> = ({ summary }) 
             <ArrowRight className="w-4 h-4" />
           </div>
           <div className="flex items-center justify-between text-xs text-slate-400 font-mono mb-2">
-            <span>2. ELIGIBLE</span>
+            <span>2. POLICY GATED</span>
             <Layers className="w-3.5 h-3.5 text-slate-500" />
           </div>
           <div>

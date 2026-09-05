@@ -175,10 +175,7 @@ export const OverviewPage: React.FC = () => {
                       return (
                         <div key={st.strategy_type} className="p-3 rounded-lg bg-slate-950 border border-slate-800/80 flex items-center justify-between text-xs font-mono">
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-100 block">{st.strategy_type}</span>
-                              <ProvenanceBadge category={category} size="sm" />
-                            </div>
+                            <span className="font-bold text-slate-100 block">{st.strategy_type}</span>
                             <span className="text-[11px] text-slate-400 mt-0.5 block">{st.attempt_count ?? 0} Attempts · {st.success_count ?? 0} {recoveryLabel}</span>
                           </div>
                           <div className="text-right">
