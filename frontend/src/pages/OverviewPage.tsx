@@ -87,14 +87,14 @@ export const OverviewPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 title="REVENUE AT RISK"
-                value={`₹${((summary.revenue_at_risk_rupees ?? summary.total_transaction_value_rupees) ?? 0).toLocaleString('en-IN')}`}
+                value={`₹${((summary.revenue_at_risk_rupees ?? summary.total_transaction_value_rupees) ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 subtitle={`${(summary.total_cases ?? summary.total_transaction_count) ?? 0} total failed transaction records`}
                 accent="rose"
                 icon={DollarSign}
               />
               <MetricCard
                 title="VERIFIED RECOVERED"
-                value={`₹${((summary.total_verified_recovered_rupees ?? summary.verified_recovered_rupees) ?? 0).toLocaleString('en-IN')}`}
+                value={`₹${((summary.total_verified_recovered_rupees ?? summary.verified_recovered_rupees) ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 subtitle={(summary.verified_recovered_cases ?? summary.verified_recovered_count ?? 0) > 0 
                   ? `${summary.verified_recovered_cases ?? summary.verified_recovered_count} verified recovered payments` 
                   : "No authoritative Razorpay payment confirmation recorded yet"}
@@ -103,14 +103,14 @@ export const OverviewPage: React.FC = () => {
               />
               <MetricCard
                 title="SIMULATED RECOVERED"
-                value={`₹${(summary.simulated_recovered_rupees ?? 0).toLocaleString('en-IN')}`}
+                value={`₹${(summary.simulated_recovered_rupees ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 subtitle={`${summary.simulated_recovered_count ?? 0} simulated batch recoveries (Simulation Engine)`}
                 accent="teal"
                 icon={Percent}
               />
               <MetricCard
                 title="ELIGIBLE CASES GATED"
-                value={summary.eligible_cases}
+                value={summary.gated_eligible_cases ?? (summary.eligible_cases - (summary.policy_blocked_count ?? 0))}
                 subtitle={`${summary.policy_blocked_count ?? summary.ineligible_cases ?? 0} cases blocked by policy rules`}
                 accent="indigo"
                 icon={Layers}
@@ -139,7 +139,7 @@ export const OverviewPage: React.FC = () => {
                         <div className="flex items-center justify-between text-xs font-mono">
                           <span className="text-slate-300 font-medium">{cat.category}</span>
                           <span className="text-slate-400">
-                            ₹{(cat.amount_rupees ?? 0).toLocaleString('en-IN')} ({(cat.percentage ?? 0).toFixed(1)}%)
+                            ₹{(cat.amount_rupees ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({(cat.percentage ?? 0).toFixed(1)}%)
                           </span>
                         </div>
                         <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
@@ -161,7 +161,7 @@ export const OverviewPage: React.FC = () => {
                     <h4 className="text-sm font-semibold text-slate-100 font-mono">TOP RECOVERY STRATEGIES</h4>
                     <p className="text-xs text-slate-400">Strategy ranking by attempt-weighted recovery rate</p>
                   </div>
-                  <ProvenanceBadge category="OBSERVED" size="sm" />
+                  <ProvenanceBadge category={strategies?.evidence_category || 'SIMULATED'} size="sm" />
                 </div>
 
                 {strategies?.strategies && (
@@ -169,7 +169,7 @@ export const OverviewPage: React.FC = () => {
                     {strategies.strategies.slice(0, 4).map((st) => {
                       const ratePct = Math.round(((st.recovery_rate ?? st.weighted_recovery_rate) ?? 0) * 100);
                       const recoveredRupees = st.total_recovered_rupees ?? ((st.total_recovered_paise ?? 0) / 100);
-                      const category = st.evidence_category || 'OBSERVED';
+                      const category = st.evidence_category || 'SIMULATED';
                       const recoveryLabel = category === 'SIMULATED' ? 'Simulated Recoveries' : category === 'VERIFIED' ? 'Verified Recoveries' : 'Recoveries';
 
                       return (
@@ -183,7 +183,7 @@ export const OverviewPage: React.FC = () => {
                           </div>
                           <div className="text-right">
                             <span className="text-emerald-400 font-bold text-sm block">{ratePct}%</span>
-                            <span className="text-[10px] text-indigo-300">₹{recoveredRupees.toLocaleString('en-IN')}</span>
+                            <span className="text-[10px] text-indigo-300">₹{recoveredRupees.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                         </div>
                       );

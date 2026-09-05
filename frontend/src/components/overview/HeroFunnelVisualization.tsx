@@ -8,9 +8,10 @@ interface HeroFunnelProps {
 
 export const HeroFunnelVisualization: React.FC<HeroFunnelProps> = ({ summary }) => {
   const atRisk = summary?.revenue_at_risk_rupees ?? summary?.total_transaction_value_rupees ?? 0;
-  const eligibleCases = summary?.eligible_cases ?? summary?.eligible_transaction_count ?? 0;
+  const policyBlocked = summary?.policy_blocked_count ?? 0;
+  const gatedEligibleCases = summary?.gated_eligible_cases ?? ((summary?.eligible_cases ?? 0) - policyBlocked);
   const totalCases = summary?.total_cases ?? summary?.total_transaction_count ?? 0;
-  const eligibleRatio = totalCases > 0 ? Math.round((eligibleCases / totalCases) * 100) : 0;
+  const eligibleRatio = totalCases > 0 ? Math.round((gatedEligibleCases / totalCases) * 100) : 0;
   const actionsAttempted = summary?.total_actions_attempted ?? summary?.actions_attempted ?? 0;
   const verifiedCases = summary?.verified_recovered_cases ?? summary?.verified_recovered_count ?? 0;
   const verifiedRecoveredRupees = summary?.total_verified_recovered_rupees ?? summary?.verified_recovered_rupees ?? 0;
@@ -48,7 +49,7 @@ export const HeroFunnelVisualization: React.FC<HeroFunnelProps> = ({ summary }) 
           </div>
           <div>
             <div className="font-serif-title text-2xl font-normal text-slate-100">
-              ₹{atRisk.toLocaleString('en-IN')}
+              ₹{atRisk.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-[11px] text-slate-400 mt-1">{totalCases} failed payments</p>
           </div>
@@ -65,7 +66,7 @@ export const HeroFunnelVisualization: React.FC<HeroFunnelProps> = ({ summary }) 
           </div>
           <div>
             <div className="font-serif-title text-2xl font-normal text-slate-100">
-              {eligibleCases} Cases
+              {gatedEligibleCases} Cases
             </div>
             <p className="text-[11px] font-mono text-emerald-400 mt-1">{eligibleRatio}% Gated Eligible</p>
           </div>

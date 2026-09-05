@@ -26,6 +26,7 @@ export interface DashboardSummary {
   total_cases: number;
   eligible_transaction_count: number;
   eligible_cases: number;
+  gated_eligible_cases?: number;
   ineligible_cases: number;
   eligible_revenue_paise: number;
   eligible_revenue_rupees: number;

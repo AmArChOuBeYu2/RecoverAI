@@ -89,7 +89,13 @@ class MetricsService:
         # 2. Eligibility & Context Metrics
         eligible_cases_query = case_query.filter(RecoveryCase.status != RecoveryCaseStatus.INELIGIBLE.value)
         eligible_tx_count = eligible_cases_query.count()
-        
+
+        ineligible_tx_count = (
+            db.query(RecoveryCase)
+            .filter(RecoveryCase.status == RecoveryCaseStatus.INELIGIBLE.value)
+            .count()
+        )
+
         eligible_revenue_paise = (
             db.query(func.coalesce(func.sum(Transaction.amount_paise), 0))
             .select_from(RecoveryCase)
@@ -99,24 +105,29 @@ class MetricsService:
             or 0
         )
 
-        # 3. Pipeline Decision Metrics
+        # 3. Pipeline Decision Metrics & Mutually Exclusive Eligibility Partitioning
         ai_decision_count = db.query(RecoveryDecision).count()
         
-        policy_approved_count = (
-            db.query(PolicyDecision)
-            .filter(PolicyDecision.decision == PolicyDecisionType.APPROVE.value)
-            .count()
-        )
         policy_blocked_count = (
-            db.query(PolicyDecision)
+            db.query(func.count(func.distinct(PolicyDecision.recovery_case_id)))
             .filter(PolicyDecision.decision == PolicyDecisionType.DENY.value)
-            .count()
+            .scalar()
+            or 0
+        )
+        policy_approved_count = (
+            db.query(func.count(func.distinct(PolicyDecision.recovery_case_id)))
+            .filter(PolicyDecision.decision == PolicyDecisionType.APPROVE.value)
+            .scalar()
+            or 0
         )
         escalation_count = (
             db.query(RecoveryCase)
             .filter(RecoveryCase.status == RecoveryCaseStatus.ESCALATED.value)
             .count()
         )
+
+        # Gated eligible cases (passed initial screening and policy safety gate)
+        gated_eligible_cases = max(0, eligible_tx_count - policy_blocked_count)
 
         # 4. Action Execution Breakdown
         total_actions_attempted = action_query.filter(RecoveryAction.status != "FAILED").count()
@@ -226,7 +237,6 @@ class MetricsService:
         ).count()
         razorpay_api_failure_rate = (failed_rp_calls / total_rp_calls) if total_rp_calls > 0 else 0.0
 
-        ineligible_tx_count = total_tx_count - eligible_tx_count
         total_tx_value_rupees = round(total_tx_value_paise / 100.0, 2)
         eligible_revenue_rupees = round(eligible_revenue_paise / 100.0, 2)
         verified_recovered_rupees = round(verified_recovered_paise / 100.0, 2)
@@ -243,6 +253,7 @@ class MetricsService:
             "revenue_at_risk_rupees": total_tx_value_rupees,
             "eligible_transaction_count": eligible_tx_count,
             "eligible_cases": eligible_tx_count,
+            "gated_eligible_cases": gated_eligible_cases,
             "ineligible_cases": ineligible_tx_count,
             "eligible_revenue_paise": eligible_revenue_paise,
             "eligible_revenue_rupees": eligible_revenue_rupees,
