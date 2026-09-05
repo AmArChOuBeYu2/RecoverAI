@@ -240,10 +240,11 @@ export interface StrategySummaryItem {
   attempt_count: number;
   success_count: number;
   total_recovered_paise: number;
-  total_recovered_rupees: number;
-  weighted_recovery_rate: number;
+  total_recovered_rupees?: number;
+  recovery_rate?: number;
+  weighted_recovery_rate?: number;
   wilson_lower_bound: number;
-  economic_strategy_value: number;
+  economic_strategy_value?: number;
   confidence_level: string;
   sample_size_tier: string;
   evidence_category: string;

@@ -49,6 +49,7 @@ def run_recovery_orchestration_batch(
     """
     from backend.services.orchestrator import OrchestratorService
     res = OrchestratorService.run_batch(db, limit=limit, force_reprocess=force_reprocess)
+    db.commit()
     return res
 
 @router.post("/detect", response_model=Dict[str, Any])

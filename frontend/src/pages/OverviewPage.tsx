@@ -109,7 +109,7 @@ export const OverviewPage: React.FC = () => {
               <MetricCard
                 title="ELIGIBLE CASES GATED"
                 value={summary.eligible_cases}
-                subtitle={`${summary.ineligible_cases} cases blocked by policy rules`}
+                subtitle={`${summary.policy_blocked_count ?? summary.ineligible_cases ?? 0} cases blocked by policy rules`}
                 accent="indigo"
                 icon={Layers}
               />
@@ -165,7 +165,8 @@ export const OverviewPage: React.FC = () => {
                 {strategies?.strategies && (
                   <div className="space-y-3">
                     {strategies.strategies.slice(0, 4).map((st) => {
-                      const ratePct = Math.round((st.weighted_recovery_rate || 0) * 100);
+                      const ratePct = Math.round(((st.recovery_rate ?? st.weighted_recovery_rate) ?? 0) * 100);
+                      const recoveredRupees = st.total_recovered_rupees ?? ((st.total_recovered_paise ?? 0) / 100);
                       return (
                         <div key={st.strategy_type} className="p-3 rounded-lg bg-slate-950 border border-slate-800/80 flex items-center justify-between text-xs font-mono">
                           <div>
@@ -174,7 +175,7 @@ export const OverviewPage: React.FC = () => {
                           </div>
                           <div className="text-right">
                             <span className="text-emerald-400 font-bold text-sm block">{ratePct}%</span>
-                            <span className="text-[10px] text-indigo-300">₹{(st.total_recovered_rupees ?? 0).toLocaleString('en-IN')}</span>
+                            <span className="text-[10px] text-indigo-300">₹{recoveredRupees.toLocaleString('en-IN')}</span>
                           </div>
                         </div>
                       );

@@ -259,17 +259,21 @@ class PolicyEngine:
         # PRECEDENCE 10: Cooldown Period Check
         # ---------------------------------------------------------
         cooldown_active = False
+        elapsed_min = 0
         if case.actions:
-            last_action = max(case.actions, key=lambda a: a.executed_at)
-            last_exec_time = last_action.executed_at
-            if last_exec_time and last_exec_time.tzinfo is None:
-                last_exec_time = last_exec_time.replace(tzinfo=timezone.utc)
-            elapsed_sec = (now_utc - last_exec_time).total_seconds()
-            cooldown_sec = cfg.cooldown_minutes * 60
+            valid_actions = [a for a in case.actions if a.executed_at]
+            if valid_actions:
+                last_action = max(valid_actions, key=lambda a: a.executed_at)
+                last_exec_time = last_action.executed_at
+                if last_exec_time:
+                    if last_exec_time.tzinfo is None:
+                        last_exec_time = last_exec_time.replace(tzinfo=timezone.utc)
+                    elapsed_sec = (now_utc - last_exec_time).total_seconds()
+                    cooldown_sec = cfg.cooldown_minutes * 60
+                    elapsed_min = max(int(elapsed_sec // 60), 0)
 
-            if elapsed_sec < cooldown_sec:
-                cooldown_active = True
-                elapsed_min = int(elapsed_sec // 60)
+                    if elapsed_sec < cooldown_sec:
+                        cooldown_active = True
 
         rule_cooldown = RuleEvaluationDetail(
             rule_name="COOLDOWN_ACTIVE",
@@ -278,7 +282,7 @@ class PolicyEngine:
             threshold_value=f"{cfg.cooldown_minutes}m cooldown",
             decision_impact="DENY" if cooldown_active else "PASS",
             explanation=f"Cooldown active: {elapsed_min}m elapsed since last attempt (minimum {cfg.cooldown_minutes}m required)"
-            if cooldown_active else "Cooldown period satisfied - PASS",
+            if cooldown_active else "No recent recovery action attempt - PASS",
         )
         rules_evaluated.append(rule_cooldown)
         if cooldown_active:

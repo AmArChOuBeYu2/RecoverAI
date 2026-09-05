@@ -146,7 +146,7 @@ class OrchestratorService:
         batch_run.success_count = success_count
         batch_run.total_recovered_paise = total_recovered_paise
 
-        db.flush()
+        db.commit()
 
         logger.info(f"Batch run '{run_name}' finished: processed={processed_count}, success={success_count}, errors={error_count}.")
 

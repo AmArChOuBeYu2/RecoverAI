@@ -107,14 +107,15 @@ def test_orchestrator_run_batch_basic(db_session: Session):
 
 def test_orchestrator_idempotency_terminal_cases(db_session: Session):
     """Test that running batch processing again skips cases already in terminal state."""
-    create_sample_failed_transactions(db_session, count=3)
+    txns = create_sample_failed_transactions(db_session, count=3)
+    txn_ids = [t.id for t in txns]
 
     # First run processes transactions
-    res1 = OrchestratorService.run_batch(db_session, batch_run_name="run_1", limit=10)
+    res1 = OrchestratorService.run_batch(db_session, transaction_ids=txn_ids, batch_run_name="run_1", limit=10)
     assert res1["total_processed"] == 3
 
     # Second run should detect terminal cases and skip re-execution
-    res2 = OrchestratorService.run_batch(db_session, batch_run_name="run_2", limit=10)
+    res2 = OrchestratorService.run_batch(db_session, transaction_ids=txn_ids, batch_run_name="run_2", limit=10)
     assert res2["total_processed"] == 3
     for case_sum in res2["case_summaries"]:
         assert case_sum.get("skipped") is True
@@ -149,6 +150,7 @@ def test_orchestrator_unrecoverable_category_handling(db_session: Session):
 def test_orchestrator_fault_tolerance_per_case_error(db_session: Session, monkeypatch):
     """Test that an exception in one case is caught, logged, and does not crash the batch run."""
     txns = create_sample_failed_transactions(db_session, count=3)
+    txn_ids = [t.id for t in txns]
 
     # Monkeypatch EligibilityChecker to throw an error on the second transaction
     target_txn_id = txns[1].id
@@ -161,7 +163,7 @@ def test_orchestrator_fault_tolerance_per_case_error(db_session: Session, monkey
 
     monkeypatch.setattr(OrchestratorService, "_process_single_transaction", mock_process)
 
-    res = OrchestratorService.run_batch(db_session, batch_run_name="fault_test_batch")
+    res = OrchestratorService.run_batch(db_session, transaction_ids=txn_ids, batch_run_name="fault_test_batch")
 
     assert res["status"] == "COMPLETED_WITH_ERRORS"
     assert res["total_processed"] == 3
