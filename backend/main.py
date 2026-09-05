@@ -1,3 +1,4 @@
+import os
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -34,10 +35,27 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+allowed_origins = [
+    "https://frontend-eta-blush-g7x2xt69ry.vercel.app",
+    "https://frontend-9nysw3zte-amars-projects-20e00d38.vercel.app",
+    "https://project-7-razor-pay.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8000",
+]
+
+env_origins = os.environ.get("ALLOWED_ORIGINS")
+if env_origins:
+    for o in env_origins.split(","):
+        o_clean = o.strip()
+        if o_clean and o_clean not in allowed_origins:
+            allowed_origins.append(o_clean)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
