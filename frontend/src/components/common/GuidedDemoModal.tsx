@@ -67,7 +67,7 @@ export const GuidedDemoModal: React.FC<GuidedDemoModalProps> = ({ isOpen, onClos
       // Step 6: Summary Metrics
       updateStep(6, 'running');
       const summary = await api.getDashboardSummary();
-      updateStep(6, 'success', `Portfolio Recovery Rate: ${(summary.revenue_recovery_rate * 100).toFixed(1)}%`);
+      updateStep(6, 'success', `Portfolio Recovery Rate: ${(((summary?.revenue_recovery_rate ?? 0) * 100)).toFixed(1)}%`);
 
       setRunning(false);
       setTimeout(() => {

@@ -110,7 +110,7 @@ export const OverviewPage: React.FC = () => {
               />
               <MetricCard
                 title="ELIGIBLE CASES GATED"
-                value={summary.gated_eligible_cases ?? (summary.eligible_cases - (summary.policy_blocked_count ?? 0))}
+                value={summary.gated_eligible_cases ?? ((summary.eligible_cases ?? 0) - (summary.policy_blocked_count ?? 0))}
                 subtitle={`${summary.policy_blocked_count ?? summary.ineligible_cases ?? 0} cases blocked by policy rules`}
                 accent="indigo"
                 icon={Layers}

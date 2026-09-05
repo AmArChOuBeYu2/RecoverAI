@@ -39,7 +39,7 @@ export const StrategyComparisonTable: React.FC<StrategyComparisonTableProps> = (
                   {st.success_count}
                 </td>
                 <td className="px-4 py-3.5 text-right font-bold text-emerald-300">
-                  ₹{(st.total_recovered_rupees ?? (st.total_recovered_paise / 100)).toLocaleString('en-IN')}
+                  ₹{(st.total_recovered_rupees ?? ((st.total_recovered_paise ?? 0) / 100)).toLocaleString('en-IN')}
                 </td>
                 <td className="px-4 py-3.5 text-center font-bold text-emerald-400">
                   {ratePct}%

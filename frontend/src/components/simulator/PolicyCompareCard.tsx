@@ -80,7 +80,7 @@ export const PolicyCompareCard: React.FC<PolicyCompareCardProps> = ({ data }) =>
               +₹{incrementalRupees.toLocaleString('en-IN')}
             </div>
             <p className="text-xs text-indigo-300/80 mt-1 font-mono">
-              +{upliftRate}% Absolute Rate Uplift (+{percentageImprovement.toFixed(1)}% Improvement)
+              +{upliftRate}% Absolute Rate Uplift (+{(percentageImprovement ?? 0).toFixed(1)}% Improvement)
             </p>
           </div>
           <div className="text-[11px] font-mono text-slate-400 bg-slate-950/60 p-2 rounded border border-slate-800">

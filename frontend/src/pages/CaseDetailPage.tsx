@@ -183,7 +183,7 @@ export const CaseDetailPage: React.FC<CaseDetailPageProps> = ({ caseId, onNaviga
             <CreditCard className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-serif font-bold text-white">
-            ₹{(txn.amount_paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            ₹{(txn.amount_rupees ?? ((txn.amount_paise ?? 0) / 100)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </div>
           <div className="mt-3 space-y-1 font-mono text-xs text-slate-300">
             <div className="flex justify-between">
