@@ -75,9 +75,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-            <a href="#how-it-works" className="hover:text-emerald-400 transition-colors">How It Works</a>
-            <a href="#evidence" className="hover:text-emerald-400 transition-colors">Evidence & Trust</a>
-            <a href="#why-nivaran" className="hover:text-emerald-400 transition-colors">Why Nivaran</a>
+            <a
+              href="#how-it-works"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.hash = 'how-it-works';
+                document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="hover:text-emerald-400 transition-colors"
+            >
+              How It Works
+            </a>
+            <a
+              href="#evidence"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.hash = 'evidence';
+                document.getElementById('evidence')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="hover:text-emerald-400 transition-colors"
+            >
+              Evidence & Trust
+            </a>
+            <a
+              href="#why-nivaran"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.hash = 'why-nivaran';
+                document.getElementById('why-nivaran')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="hover:text-emerald-400 transition-colors"
+            >
+              Why Nivaran
+            </a>
             <button
               onClick={() => onNavigate('/evidence')}
               className="hover:text-emerald-400 transition-colors text-xs font-mono"
@@ -129,6 +159,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               </button>
               <a
                 href="#how-it-works"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.hash = 'how-it-works';
+                  document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 className="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-medium text-base transition-all flex items-center gap-2"
               >
                 <span>SEE HOW IT WORKS</span>

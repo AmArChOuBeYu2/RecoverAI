@@ -6,7 +6,7 @@
   "train_transactions_count": 800,
   "holdout_transactions_count": 200,
   "customers_count": 400,
-  "generated_at": "2026-09-05T16:51:42.835465+00:00",
+  "generated_at": "2026-09-05T16:59:35.680895+00:00",
   "data_source": "SYNTHETIC_SIMULATION",
   "split_definition": {
     "historical_train_ratio": 0.8,
@@ -14,7 +14,7 @@
     "split_method": "CHRONOLOGICAL_CREATION_TIME"
   },
   "stats": {
-    "generated_at": "2026-09-05T16:51:42.835465+00:00",
+    "generated_at": "2026-09-05T16:59:35.680895+00:00",
     "total_records": 1000,
     "train_records": 800,
     "holdout_records": 200,

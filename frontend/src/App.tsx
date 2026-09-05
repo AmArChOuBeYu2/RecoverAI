@@ -11,6 +11,10 @@ import { EvidencePage } from './pages/EvidencePage';
 
 export function App() {
   const normalizePath = (rawHash: string): string => {
+    if (rawHash && !rawHash.startsWith('#/')) {
+      // Same-page section anchors (e.g. #how-it-works, #evidence, #why-nivaran) remain on the landing page ('/')
+      return '/';
+    }
     let p = rawHash.replace(/^#/, '').split('?')[0];
     if (!p.startsWith('/')) {
       p = '/' + p;
