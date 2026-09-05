@@ -210,7 +210,7 @@ class OrchestratorService:
             db.add(case)
             db.flush()
 
-        # Step 2: Immutable Terminal State Protection (RECOVERED and UNRECOVERED cannot be rerun)
+        # Step 2: Immutable Terminal State Protection (RECOVERED and UNRECOVERED are terminal invariants)
         if case.status in (RecoveryCaseStatus.RECOVERED.value, RecoveryCaseStatus.UNRECOVERED.value):
             logger.info(f"Case {case.id} is in terminal state '{case.status}'. Skipping re-processing.")
             return {
@@ -235,6 +235,11 @@ class OrchestratorService:
                 "amount_recovered_paise": 0,
             }
 
+        if force_reprocess:
+            case.is_terminal = False
+            case.status = RecoveryCaseStatus.DETECTED.value
+            db.flush()
+
         # Step 3: Failure Category Classification Verification
         if transaction.failure_category in (FailureCategory.BUSINESS_ERROR.value, FailureCategory.REPEATED_FAILURE.value) and not force_reprocess:
             case.status = RecoveryCaseStatus.INELIGIBLE.value
@@ -252,20 +257,31 @@ class OrchestratorService:
 
         # Step 4: Build Structured Context with Business-Hours Evaluation Timestamp
         from datetime import timedelta
-        now_eval = as_of_time or datetime.now(timezone.utc)
-        if as_of_time is None:
-            ist_h = (now_eval + timedelta(hours=5, minutes=30)).hour
-            if not (9 <= ist_h < 21):
-                now_eval = now_eval.replace(hour=8, minute=30, second=0, microsecond=0)
+        eval_time = as_of_time
+        if eval_time is None:
+            now = datetime.now(timezone.utc)
+            tx_created = transaction.created_at
+            if tx_created and tx_created.tzinfo is None:
+                tx_created = tx_created.replace(tzinfo=timezone.utc)
 
-        context = ContextBuilder.assemble_case_context(db=db, case=case, as_of_time=now_eval)
-        context["current_time_utc"] = now_eval
+            # For synthetic data batch runs, evaluate relative to transaction creation time
+            if force_reprocess or (tx_created and (now - tx_created).total_seconds() > 259200):
+                eval_time = tx_created + timedelta(minutes=10) if tx_created else now
+            else:
+                eval_time = now
+
+        ist_h = (eval_time + timedelta(hours=5, minutes=30)).hour
+        if not (9 <= ist_h < 21):
+            eval_time = eval_time.replace(hour=8, minute=30, second=0, microsecond=0)
+
+        context = ContextBuilder.assemble_case_context(db=db, case=case, as_of_time=eval_time)
+        context["current_time_utc"] = eval_time
 
         # Step 5: Segmentation Engine
         segment = SegmentationService.assign_segment_to_case(db=db, case=case)
 
         # Step 6: Eligibility Check
-        eligibility = EligibilityChecker.evaluate_eligibility(db=db, case=case)
+        eligibility = EligibilityChecker.evaluate_eligibility(db=db, case=case, as_of_time=eval_time)
         if not eligibility.is_eligible:
             case.status = RecoveryCaseStatus.INELIGIBLE.value
             case.is_terminal = True

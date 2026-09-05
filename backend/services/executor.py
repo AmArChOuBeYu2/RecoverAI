@@ -35,8 +35,11 @@ from backend.integrations.razorpay.exceptions import RazorpayIntegrationError
 
 logger = logging.getLogger(__name__)
 
+import time
+
 # Module-level thread lock for atomic mode determination & cap enforcement
 _execution_lock = threading.Lock()
+_razorpay_cooldown_until: float = 0
 
 class ActionExecutionError(Exception):
     """Raised when action execution fails due to system error, authorization error, or external API failure."""
@@ -45,16 +48,6 @@ class ActionExecutionError(Exception):
 class ActionExecutor:
     """
     Centralized execution engine for recovery actions.
-    
-    Invariants:
-    1. AI Recommends -> Policy Decides -> Code Authorizes -> Action Executes.
-    2. Zero execution occurs without PolicyDecisionType.APPROVE.
-    3. TrustGate safety verification must pass.
-    4. Bounded REAL payment link creation (MAX_REAL_PAYMENT_LINKS) with thread-safe atomic cap enforcement.
-    5. Execution Idempotency: Repeated execution requests for an existing case return existing action without duplicates.
-    6. External Failure Semantics: Razorpay API failures produce ACTION_EXECUTION_FAILED audit records and do not transition to AWAITING_VERIFICATION.
-    7. Integer-paise amounts preserved in all payment link payloads.
-    8. Valid state transitions: POLICY_APPROVED -> ACTION_ATTEMPTED -> AWAITING_VERIFICATION (or ESCALATED).
     """
 
     def __init__(self, payment_link_service: Optional[RazorpayPaymentLinkService] = None):
@@ -73,11 +66,12 @@ class ActionExecutor:
         """
         Determine execution_mode and notification_mode based on action_type and config limits.
         Must be invoked within thread-safe context to prevent race conditions.
-        
-        Returns:
-            (execution_mode, notification_mode)
         """
+        global _razorpay_cooldown_until
         if action_type != StrategyType.PAYMENT_LINK.value:
+            return ActionExecutionMode.SIMULATED.value, "SIMULATED"
+
+        if time.time() < _razorpay_cooldown_until:
             return ActionExecutionMode.SIMULATED.value, "SIMULATED"
 
         # Check if Razorpay credentials exist
@@ -265,29 +259,29 @@ class ActionExecutor:
         customer_name = case.customer.name if case.customer else "Valued Customer"
 
         if execution_mode == ActionExecutionMode.REAL_TEST_MODE.value:
-            try:
-                # 24-hour payment link expiry
-                expire_timestamp = int((datetime.now(timezone.utc) + timedelta(hours=24)).timestamp())
-                
-                link_req = CreatePaymentLinkRequest(
-                    amount_paise=amount_paise,
-                    currency=txn.currency if txn else "INR",
-                    description=f"Nivaran Payment Link for Case {case.id[:8]}",
-                    reference_id=case.id,
-                    customer_name=customer_name,
-                    customer_email=customer_email,
-                    customer_contact=customer_contact,
-                    notify_sms=True,
-                    notify_email=True,
-                    reminder_enable=True,
-                    expire_by=expire_timestamp,
-                    notes={
-                        "recovery_case_id": case.id,
-                        "transaction_id": txn.id if txn else "",
-                        "strategy_type": StrategyType.PAYMENT_LINK.value,
-                    },
-                )
+            # 24-hour payment link expiry
+            expire_timestamp = int((datetime.now(timezone.utc) + timedelta(hours=24)).timestamp())
+            
+            link_req = CreatePaymentLinkRequest(
+                amount_paise=amount_paise,
+                currency=txn.currency if txn else "INR",
+                description=f"Nivaran Payment Link for Case {case.id[:8]}",
+                reference_id=case.id,
+                customer_name=customer_name,
+                customer_email=customer_email,
+                customer_contact=customer_contact,
+                notify_sms=True,
+                notify_email=True,
+                reminder_enable=True,
+                expire_by=expire_timestamp,
+                notes={
+                    "recovery_case_id": case.id,
+                    "transaction_id": txn.id if txn else "",
+                    "strategy_type": StrategyType.PAYMENT_LINK.value,
+                },
+            )
 
+            try:
                 link_res = self.payment_link_service.create_payment_link(link_req)
 
                 action = RecoveryAction(
@@ -308,10 +302,16 @@ class ActionExecutor:
                 db.flush()
                 return action
             except Exception as err:
-                logger.warning(
-                    f"Real Razorpay payment link creation failed for case '{case.id}' ({err}). "
-                    "Falling back to SIMULATED payment link execution mode."
-                )
+                global _razorpay_cooldown_until
+                _razorpay_cooldown_until = time.time() + 60.0
+                err_str = str(err).lower()
+                if "test mode limit" in err_str or "limit of 30" in err_str or "too many requests" in err_str or "rate limit" in err_str:
+                    logger.warning(
+                        f"Razorpay rate/test limit reached for case '{case.id}' ({err}). "
+                        "Falling back to SIMULATED payment link execution mode."
+                    )
+                else:
+                    raise
 
         # SIMULATED PAYMENT LINK EXECUTION
         sim_plink_id = f"plink_sim_{uuid.uuid4().hex[:12]}"

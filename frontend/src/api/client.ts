@@ -57,7 +57,7 @@ export const api = {
 
   // Recovery Pipeline Operations
   seedDataset: (count = 500) => apiFetch<{ status: string; transactions_created: number; message: string }>(`/api/recovery/seed?count=${count}`, { method: 'POST' }),
-  runBatchRecovery: (limit = 500) => apiFetch<any>(`/api/recovery/run?limit=${limit}`, { method: 'POST' }),
+  runBatchRecovery: (limit = 500, force = true) => apiFetch<any>(`/api/recovery/run?limit=${limit}&force_reprocess=${force}`, { method: 'POST' }),
   runDetection: (limit = 500) => apiFetch<{ detected_count: number; cases: any[] }>(`/api/recovery/detect?limit=${limit}`, { method: 'POST' }),
   listCases: (params?: { status?: string; segment_id?: string; limit?: number; offset?: number }) => {
     const q = new URLSearchParams();

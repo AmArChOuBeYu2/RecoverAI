@@ -226,33 +226,48 @@ class MetricsService:
         ).count()
         razorpay_api_failure_rate = (failed_rp_calls / total_rp_calls) if total_rp_calls > 0 else 0.0
 
+        ineligible_tx_count = total_tx_count - eligible_tx_count
+        total_tx_value_rupees = round(total_tx_value_paise / 100.0, 2)
+        eligible_revenue_rupees = round(eligible_revenue_paise / 100.0, 2)
+        verified_recovered_rupees = round(verified_recovered_paise / 100.0, 2)
+        simulated_recovered_rupees = round(simulated_recovered_paise / 100.0, 2)
+        total_unrecovered_rupees = round(total_unrecovered_paise / 100.0, 2)
+
         return {
             "batch_run_id": batch_run_id,
             "total_transaction_count": total_tx_count,
+            "total_cases": total_tx_count,
             "total_transaction_value_paise": total_tx_value_paise,
-            "total_transaction_value_rupees": round(total_tx_value_paise / 100.0, 2),
+            "total_transaction_value_rupees": total_tx_value_rupees,
             "total_revenue_at_risk_paise": total_revenue_at_risk_paise,
+            "revenue_at_risk_rupees": total_tx_value_rupees,
             "eligible_transaction_count": eligible_tx_count,
+            "eligible_cases": eligible_tx_count,
+            "ineligible_cases": ineligible_tx_count,
             "eligible_revenue_paise": eligible_revenue_paise,
-            "eligible_revenue_rupees": round(eligible_revenue_paise / 100.0, 2),
+            "eligible_revenue_rupees": eligible_revenue_rupees,
             "ai_decision_count": ai_decision_count,
             "policy_approved_count": policy_approved_count,
             "policy_blocked_count": policy_blocked_count,
             "escalation_count": escalation_count,
             "actions_attempted": total_actions_attempted,
+            "total_actions_attempted": total_actions_attempted,
             "actions_by_execution_mode": {
                 "real_test_mode_count": real_test_mode_count,
                 "simulated_mode_count": simulated_mode_count,
             },
             "actions_by_strategy": actions_by_strategy,
             "verified_recovered_count": verified_recovered_count,
+            "verified_recovered_cases": verified_recovered_count,
             "verified_recovered_paise": verified_recovered_paise,
-            "verified_recovered_rupees": round(verified_recovered_paise / 100.0, 2),
+            "verified_recovered_rupees": verified_recovered_rupees,
+            "total_verified_recovered_rupees": verified_recovered_rupees,
+            "total_verified_recovered_paise": verified_recovered_paise,
             "simulated_recovered_count": simulated_recovered_count,
             "simulated_recovered_paise": simulated_recovered_paise,
-            "simulated_recovered_rupees": round(simulated_recovered_paise / 100.0, 2),
+            "simulated_recovered_rupees": simulated_recovered_rupees,
             "total_unrecovered_paise": total_unrecovered_paise,
-            "total_unrecovered_rupees": round(total_unrecovered_paise / 100.0, 2),
+            "total_unrecovered_rupees": total_unrecovered_rupees,
             "unrecovered_breakdown_paise": unrecovered_breakdown,
             "case_recovery_rate": round(case_recovery_rate, 4),
             "revenue_recovery_rate": round(revenue_recovery_rate, 4),

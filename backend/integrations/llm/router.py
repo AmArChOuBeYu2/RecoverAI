@@ -4,6 +4,7 @@ Cascading LLM Router (OpenAI -> Gemini -> Deterministic Fallback) with database 
 """
 
 import logging
+import time
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 
@@ -16,10 +17,16 @@ from backend.models.llm_invocation import LLMInvocation
 
 logger = logging.getLogger(__name__)
 
+# Class-level cooldown tracking for quota/rate limited providers
+_provider_cooldowns: Dict[str, float] = {}
+
 class LLMRouter:
     """Cascading router for LLM providers with automatic DB audit trail."""
 
     def __init__(self, providers: Optional[List[LLMProvider]] = None):
+        if providers is not None:
+            for p in providers:
+                _provider_cooldowns.pop(p.name, None)
         self.providers: List[LLMProvider] = providers or [
             OpenAIProvider(),
             GeminiProvider(),
@@ -39,8 +46,16 @@ class LLMRouter:
         Guaranteed to return a valid RecoveryDiagnosis via DeterministicFallbackProvider.
         """
         fallback_triggered = False
+        now = time.time()
 
         for idx, provider in enumerate(self.providers):
+            # Check provider cooldown
+            cooldown_until = _provider_cooldowns.get(provider.name, 0)
+            if now < cooldown_until:
+                fallback_triggered = True
+                logger.info(f"[LLMRouter] Provider '{provider.name}' is in quota cooldown ({int(cooldown_until - now)}s remaining). Skipping.")
+                continue
+
             try:
                 logger.info(f"[LLMRouter] Attempting diagnosis with provider '{provider.name}' ({provider.model_name})...")
                 diagnosis, metadata = provider.diagnose(context)
@@ -69,6 +84,12 @@ class LLMRouter:
                 fallback_triggered = True
                 logger.warning(f"[LLMRouter] Provider '{provider.name}' failed: {err.message}")
 
+                # If quota/rate limit error, trigger 60s cooldown
+                err_str = str(err).lower()
+                if "429" in err_str or "quota" in err_str or "exhausted" in err_str or "credit" in err_str:
+                    _provider_cooldowns[provider.name] = time.time() + 60.0
+                    logger.warning(f"[LLMRouter] Set 60s quota cooldown for provider '{provider.name}'.")
+
                 if db:
                     inv = LLMInvocation(
                         recovery_case_id=case_id,
@@ -88,6 +109,10 @@ class LLMRouter:
             except Exception as unhandled_err:
                 fallback_triggered = True
                 logger.error(f"[LLMRouter] Unexpected error in provider '{provider.name}': {unhandled_err}")
+
+                err_str = str(unhandled_err).lower()
+                if "429" in err_str or "quota" in err_str or "exhausted" in err_str or "credit" in err_str:
+                    _provider_cooldowns[provider.name] = time.time() + 60.0
 
                 if db:
                     inv = LLMInvocation(

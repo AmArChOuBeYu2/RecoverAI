@@ -17,26 +17,56 @@ export interface HealthCheckResponse {
 
 // Dashboard & Portfolio Metrics Types
 export interface DashboardSummary {
-  metric_scope: string;
-  evidence_category: string;
-  total_transactions: number;
-  revenue_at_risk_paise: number;
+  batch_run_id?: string | null;
+  total_transaction_count: number;
+  total_transaction_value_paise: number;
+  total_transaction_value_rupees: number;
+  total_revenue_at_risk_paise: number;
   revenue_at_risk_rupees: number;
   total_cases: number;
+  eligible_transaction_count: number;
   eligible_cases: number;
   ineligible_cases: number;
+  eligible_revenue_paise: number;
+  eligible_revenue_rupees: number;
+  ai_decision_count: number;
+  policy_approved_count: number;
+  policy_blocked_count: number;
+  escalation_count: number;
+  actions_attempted: number;
   total_actions_attempted: number;
-  real_test_mode_actions: number;
-  simulated_actions: number;
+  actions_by_execution_mode: {
+    real_test_mode_count: number;
+    simulated_mode_count: number;
+  };
+  actions_by_strategy: Record<string, number>;
+  verified_recovered_count: number;
   verified_recovered_cases: number;
-  unrecovered_cases: number;
-  awaiting_verification_cases: number;
-  total_verified_recovered_paise: number;
+  verified_recovered_paise: number;
+  verified_recovered_rupees: number;
   total_verified_recovered_rupees: number;
+  total_verified_recovered_paise: number;
+  simulated_recovered_count: number;
+  simulated_recovered_paise: number;
+  simulated_recovered_rupees: number;
+  total_unrecovered_paise: number;
+  total_unrecovered_rupees: number;
+  unrecovered_breakdown_paise: Record<string, number>;
   case_recovery_rate: number;
   revenue_recovery_rate: number;
+  recovery_rate: number;
   action_success_rate: number;
-  computed_at: string;
+  duplicate_actions_prevented: number;
+  reliability_rates: {
+    ai_failure_rate: number;
+    provider_fallback_rate: number;
+    razorpay_api_failure_rate: number;
+  };
+  metric_scope?: string;
+  evidence_category?: string;
+  unrecovered_cases?: number;
+  awaiting_verification_cases?: number;
+  computed_at?: string;
 }
 
 export interface FailureBreakdownItem {

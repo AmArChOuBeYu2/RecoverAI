@@ -87,15 +87,15 @@ export const OverviewPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 title="REVENUE AT RISK"
-                value={`₹${(summary.revenue_at_risk_rupees ?? 0).toLocaleString('en-IN')}`}
-                subtitle={`${summary.total_cases ?? 0} total failed transaction records`}
+                value={`₹${((summary.revenue_at_risk_rupees ?? summary.total_transaction_value_rupees) ?? 0).toLocaleString('en-IN')}`}
+                subtitle={`${(summary.total_cases ?? summary.total_transaction_count) ?? 0} total failed transaction records`}
                 accent="rose"
                 icon={DollarSign}
               />
               <MetricCard
                 title="VERIFIED RECOVERED"
-                value={`₹${(summary.total_verified_recovered_rupees ?? 0).toLocaleString('en-IN')}`}
-                subtitle={`${summary.verified_recovered_cases ?? 0} verified recovered payments`}
+                value={`₹${((summary.total_verified_recovered_rupees ?? summary.verified_recovered_rupees) ?? 0).toLocaleString('en-IN')}`}
+                subtitle={`${(summary.verified_recovered_cases ?? summary.verified_recovered_count) ?? 0} verified recovered payments`}
                 accent="emerald"
                 icon={ShieldCheck}
               />
@@ -108,8 +108,8 @@ export const OverviewPage: React.FC = () => {
               />
               <MetricCard
                 title="ELIGIBLE CASES GATED"
-                value={summary.eligible_cases ?? 0}
-                subtitle={`${summary.ineligible_cases ?? 0} cases blocked by policy rules`}
+                value={summary.eligible_cases}
+                subtitle={`${summary.ineligible_cases} cases blocked by policy rules`}
                 accent="indigo"
                 icon={Layers}
               />

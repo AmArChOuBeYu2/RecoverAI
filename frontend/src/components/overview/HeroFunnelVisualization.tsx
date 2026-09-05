@@ -7,14 +7,14 @@ interface HeroFunnelProps {
 }
 
 export const HeroFunnelVisualization: React.FC<HeroFunnelProps> = ({ summary }) => {
-  const atRisk = summary?.revenue_at_risk_rupees || 0;
-  const eligibleCases = summary?.eligible_cases || 0;
-  const totalCases = summary?.total_cases || 1;
-  const eligibleRatio = Math.round((eligibleCases / totalCases) * 100);
-  const actionsAttempted = summary?.total_actions_attempted || 0;
-  const verifiedCases = summary?.verified_recovered_cases || 0;
-  const verifiedRecoveredRupees = summary?.total_verified_recovered_rupees || 0;
-  const recoveryRate = summary?.revenue_recovery_rate || 0;
+  const atRisk = summary?.revenue_at_risk_rupees ?? summary?.total_transaction_value_rupees ?? 0;
+  const eligibleCases = summary?.eligible_cases ?? summary?.eligible_transaction_count ?? 0;
+  const totalCases = summary?.total_cases ?? summary?.total_transaction_count ?? 0;
+  const eligibleRatio = totalCases > 0 ? Math.round((eligibleCases / totalCases) * 100) : 0;
+  const actionsAttempted = summary?.total_actions_attempted ?? summary?.actions_attempted ?? 0;
+  const verifiedCases = summary?.verified_recovered_cases ?? summary?.verified_recovered_count ?? 0;
+  const verifiedRecoveredRupees = summary?.total_verified_recovered_rupees ?? summary?.verified_recovered_rupees ?? 0;
+  const recoveryRate = summary?.revenue_recovery_rate ?? 0;
 
   return (
     <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl relative overflow-hidden my-6">

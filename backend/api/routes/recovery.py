@@ -27,7 +27,7 @@ def seed_recovery_dataset(
     from backend.services.detection import DetectionEngine
     res = run_synthetic_generation(db=db)
     created_txns = res.get("train_transactions", [])
-    cases = DetectionEngine.detect_unhandled_failures(db, limit=len(created_txns))
+    cases = DetectionEngine.detect_unhandled_failures(db, limit=max(count, 1000))
     db.commit()
     return {
         "status": "seeded",
@@ -39,6 +39,7 @@ def seed_recovery_dataset(
 @router.post("/run", response_model=Dict[str, Any])
 def run_recovery_orchestration_batch(
     limit: int = Query(500, ge=1, le=1000, description="Max recovery cases to process in batch"),
+    force_reprocess: bool = Query(True, description="Force re-processing of cases"),
     db: Session = Depends(get_db),
 ):
     """
@@ -47,7 +48,7 @@ def run_recovery_orchestration_batch(
     action execution, authoritative outcome verification, and empirical outcome attribution.
     """
     from backend.services.orchestrator import OrchestratorService
-    res = OrchestratorService.run_batch(db, limit=limit)
+    res = OrchestratorService.run_batch(db, limit=limit, force_reprocess=force_reprocess)
     return res
 
 @router.post("/detect", response_model=Dict[str, Any])
