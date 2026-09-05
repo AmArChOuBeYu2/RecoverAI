@@ -1,8 +1,10 @@
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.database.session import init_db
 from backend.api.routes.health import router as health_router
 from backend.api.routes.webhooks import router as webhooks_router
 from backend.api.routes.intelligence import router as intelligence_router
@@ -17,10 +19,19 @@ from backend.api.routes.batch import router as batch_router
 
 logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        init_db()
+    except Exception as e:
+        logger.error(f"Failed to initialize database on startup: {e}")
+    yield
+
 app = FastAPI(
     title="NIVARAN",
     description="Revenue recovery, resolved intelligently.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
