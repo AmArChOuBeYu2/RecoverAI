@@ -4,7 +4,7 @@ Calculates explainable, deterministic propensity scores R in [0.0, 1.0] for paym
 exposing granular positive and negative factor contributions.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from backend.models.enums import FailureCategory, CustomerType
 
