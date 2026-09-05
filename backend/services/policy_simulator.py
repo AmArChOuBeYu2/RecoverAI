@@ -290,6 +290,8 @@ class PolicySimulator:
 
         return {
             "simulation_mode": DataCategory.PROJECTED.value,
+            "evidence_category": DataCategory.PROJECTED.value,
+            "total_transactions_evaluated": baseline.total_transactions,
             "baseline": {
                 "id": baseline.id,
                 "policy_name": baseline.policy_name,
@@ -301,10 +303,19 @@ class PolicySimulator:
                 "projected_recovered_paise": baseline.projected_recovered_paise,
                 "projected_recovered_rupees": round(baseline.projected_recovered_paise / 100.0, 2),
                 "projected_recovery_rate": baseline.projected_recovery_rate,
+                "recovery_rate": baseline.projected_recovery_rate,
                 "actions_projected": baseline.actions_projected,
+                "actions_taken": baseline.actions_projected,
                 "policy_blocks_projected": baseline.policy_blocks_projected,
                 "escalations_projected": baseline.escalations_projected,
                 "contacts_projected": baseline.contacts_projected,
+            },
+            "baseline_policy": {
+                "name": baseline.policy_name,
+                "recovery_rate": baseline.projected_recovery_rate,
+                "projected_recovered_paise": baseline.projected_recovered_paise,
+                "projected_recovered_rupees": round(baseline.projected_recovered_paise / 100.0, 2),
+                "actions_taken": baseline.actions_projected,
             },
             "recoverai_optimized": {
                 "id": optimized.id,
@@ -317,10 +328,19 @@ class PolicySimulator:
                 "projected_recovered_paise": optimized.projected_recovered_paise,
                 "projected_recovered_rupees": round(optimized.projected_recovered_paise / 100.0, 2),
                 "projected_recovery_rate": optimized.projected_recovery_rate,
+                "recovery_rate": optimized.projected_recovery_rate,
                 "actions_projected": optimized.actions_projected,
+                "actions_taken": optimized.actions_projected,
                 "policy_blocks_projected": optimized.policy_blocks_projected,
                 "escalations_projected": optimized.escalations_projected,
                 "contacts_projected": optimized.contacts_projected,
+            },
+            "nivaran_optimized_policy": {
+                "name": optimized.policy_name,
+                "recovery_rate": optimized.projected_recovery_rate,
+                "projected_recovered_paise": optimized.projected_recovered_paise,
+                "projected_recovered_rupees": round(optimized.projected_recovered_paise / 100.0, 2),
+                "actions_taken": optimized.actions_projected,
             },
             "incremental_comparison": {
                 "incremental_recovered_paise": incremental_recovered_paise,
@@ -328,5 +348,11 @@ class PolicySimulator:
                 "incremental_recovery_rate_diff": incremental_recovery_rate_diff,
                 "contact_reduction_count": baseline.contacts_projected - optimized.contacts_projected,
                 "policy_block_safety_additions": optimized.policy_blocks_projected - baseline.policy_blocks_projected,
+            },
+            "projected_uplift": {
+                "incremental_recovery_rate": incremental_recovery_rate_diff,
+                "incremental_recovered_paise": incremental_recovered_paise,
+                "incremental_recovered_rupees": round(incremental_recovered_paise / 100.0, 2),
+                "percentage_improvement": round((incremental_recovery_rate_diff / baseline.projected_recovery_rate * 100) if baseline.projected_recovery_rate > 0 else 0.0, 1),
             },
         }

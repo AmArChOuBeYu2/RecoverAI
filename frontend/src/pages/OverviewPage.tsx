@@ -95,14 +95,16 @@ export const OverviewPage: React.FC = () => {
               <MetricCard
                 title="VERIFIED RECOVERED"
                 value={`₹${((summary.total_verified_recovered_rupees ?? summary.verified_recovered_rupees) ?? 0).toLocaleString('en-IN')}`}
-                subtitle={`${(summary.verified_recovered_cases ?? summary.verified_recovered_count) ?? 0} verified recovered payments`}
+                subtitle={(summary.verified_recovered_cases ?? summary.verified_recovered_count ?? 0) > 0 
+                  ? `${summary.verified_recovered_cases ?? summary.verified_recovered_count} verified recovered payments` 
+                  : "No authoritative Razorpay payment confirmation recorded yet"}
                 accent="emerald"
                 icon={ShieldCheck}
               />
               <MetricCard
-                title="REVENUE RECOVERY RATE"
-                value={`${((summary.revenue_recovery_rate ?? 0) * 100).toFixed(1)}%`}
-                subtitle={`Case recovery rate: ${((summary.case_recovery_rate ?? 0) * 100).toFixed(1)}%`}
+                title="SIMULATED RECOVERED"
+                value={`₹${(summary.simulated_recovered_rupees ?? 0).toLocaleString('en-IN')}`}
+                subtitle={`${summary.simulated_recovered_count ?? 0} simulated batch recoveries (Simulation Engine)`}
                 accent="teal"
                 icon={Percent}
               />
@@ -167,11 +169,17 @@ export const OverviewPage: React.FC = () => {
                     {strategies.strategies.slice(0, 4).map((st) => {
                       const ratePct = Math.round(((st.recovery_rate ?? st.weighted_recovery_rate) ?? 0) * 100);
                       const recoveredRupees = st.total_recovered_rupees ?? ((st.total_recovered_paise ?? 0) / 100);
+                      const category = st.evidence_category || 'OBSERVED';
+                      const recoveryLabel = category === 'SIMULATED' ? 'Simulated Recoveries' : category === 'VERIFIED' ? 'Verified Recoveries' : 'Recoveries';
+
                       return (
                         <div key={st.strategy_type} className="p-3 rounded-lg bg-slate-950 border border-slate-800/80 flex items-center justify-between text-xs font-mono">
                           <div>
-                            <span className="font-bold text-slate-100 block">{st.strategy_type}</span>
-                            <span className="text-[11px] text-slate-400">{st.attempt_count ?? 0} Attempts · {st.success_count ?? 0} Recoveries</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-100 block">{st.strategy_type}</span>
+                              <ProvenanceBadge category={category} size="sm" />
+                            </div>
+                            <span className="text-[11px] text-slate-400 mt-0.5 block">{st.attempt_count ?? 0} Attempts · {st.success_count ?? 0} {recoveryLabel}</span>
                           </div>
                           <div className="text-right">
                             <span className="text-emerald-400 font-bold text-sm block">{ratePct}%</span>

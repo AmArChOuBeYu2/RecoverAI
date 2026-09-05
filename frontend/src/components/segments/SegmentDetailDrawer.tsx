@@ -63,7 +63,7 @@ export const SegmentDetailDrawer: React.FC<SegmentDetailDrawerProps> = ({ segmen
                 </div>
                 <div>
                   <span className="text-slate-500 block text-[10px]">PAYMENT METHOD</span>
-                  <span className="text-indigo-300 font-semibold">{segment.payment_method.toUpperCase()}</span>
+                  <span className="text-indigo-300 font-semibold">{(segment.payment_method || 'ANY').toUpperCase()}</span>
                 </div>
                 <div>
                   <span className="text-slate-500 block text-[10px]">AMOUNT RANGE</span>

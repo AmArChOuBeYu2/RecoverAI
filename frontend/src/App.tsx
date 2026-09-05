@@ -10,17 +10,23 @@ import { SimulatorPage } from './pages/SimulatorPage';
 import { EvidencePage } from './pages/EvidencePage';
 
 export function App() {
+  const normalizePath = (rawHash: string): string => {
+    let p = rawHash.replace(/^#/, '').split('?')[0];
+    if (!p.startsWith('/')) {
+      p = '/' + p;
+    }
+    return p || '/';
+  };
+
   const [currentPath, setCurrentPath] = useState<string>(() => {
-    const hash = window.location.hash.replace('#', '');
-    return hash || '/';
+    return normalizePath(window.location.hash);
   });
 
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      setCurrentPath(hash || '/');
+      setCurrentPath(normalizePath(window.location.hash));
     };
 
     window.addEventListener('hashchange', handleHashChange);
@@ -29,7 +35,7 @@ export function App() {
 
   const navigate = (path: string) => {
     window.location.hash = path;
-    setCurrentPath(path);
+    setCurrentPath(normalizePath(path));
   };
 
   const handleRefreshData = () => {

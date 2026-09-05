@@ -21,7 +21,7 @@ export const SegmentMatrix: React.FC<SegmentMatrixProps> = ({ segments, onSelect
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950 border border-indigo-500/30 text-indigo-300">
-                  {seg.payment_method.toUpperCase()}
+                  {(seg.payment_method || 'ANY').toUpperCase()}
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">
                   {seg.amount_range}

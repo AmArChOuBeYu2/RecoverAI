@@ -283,27 +283,64 @@ export interface PolicySimulationResultItem {
 
 export interface SimulatorCompareResponse {
   simulation_mode: string;
-  evidence_category: string;
-  total_transactions_evaluated: number;
-  baseline_policy: {
-    name: string;
-    recovery_rate: number;
-    projected_recovered_paise: number;
-    projected_recovered_rupees: number;
-    actions_taken: number;
+  evidence_category?: string;
+  total_transactions_evaluated?: number;
+  baseline?: {
+    id?: string;
+    policy_name?: string;
+    total_transactions?: number;
+    revenue_at_risk_paise?: number;
+    revenue_at_risk_rupees?: number;
+    eligible_count?: number;
+    eligible_revenue_paise?: number;
+    projected_recovered_paise?: number;
+    projected_recovered_rupees?: number;
+    projected_recovery_rate?: number;
+    recovery_rate?: number;
+    actions_projected?: number;
+    actions_taken?: number;
   };
-  nivaran_optimized_policy: {
-    name: string;
-    recovery_rate: number;
-    projected_recovered_paise: number;
-    projected_recovered_rupees: number;
-    actions_taken: number;
+  baseline_policy?: {
+    name?: string;
+    recovery_rate?: number;
+    projected_recovered_paise?: number;
+    projected_recovered_rupees?: number;
+    actions_taken?: number;
   };
-  projected_uplift: {
-    incremental_recovery_rate: number;
-    incremental_recovered_paise: number;
-    incremental_recovered_rupees: number;
-    percentage_improvement: number;
+  recoverai_optimized?: {
+    id?: string;
+    policy_name?: string;
+    total_transactions?: number;
+    revenue_at_risk_paise?: number;
+    revenue_at_risk_rupees?: number;
+    eligible_count?: number;
+    eligible_revenue_paise?: number;
+    projected_recovered_paise?: number;
+    projected_recovered_rupees?: number;
+    projected_recovery_rate?: number;
+    recovery_rate?: number;
+    actions_projected?: number;
+    actions_taken?: number;
+  };
+  nivaran_optimized_policy?: {
+    name?: string;
+    recovery_rate?: number;
+    projected_recovered_paise?: number;
+    projected_recovered_rupees?: number;
+    actions_taken?: number;
+  };
+  incremental_comparison?: {
+    incremental_recovered_paise?: number;
+    incremental_recovered_rupees?: number;
+    incremental_recovery_rate_diff?: number;
+    contact_reduction_count?: number;
+    policy_block_safety_additions?: number;
+  };
+  projected_uplift?: {
+    incremental_recovery_rate?: number;
+    incremental_recovered_paise?: number;
+    incremental_recovered_rupees?: number;
+    percentage_improvement?: number;
   };
 }
 

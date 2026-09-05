@@ -10,10 +10,16 @@ interface PolicyCompareCardProps {
 export const PolicyCompareCard: React.FC<PolicyCompareCardProps> = ({ data }) => {
   if (!data) return null;
 
-  const baselineRate = Math.round((data.baseline_policy.recovery_rate || 0) * 100);
-  const optimizedRate = Math.round((data.nivaran_optimized_policy.recovery_rate || 0) * 100);
-  const upliftRate = Math.round((data.projected_uplift.incremental_recovery_rate || 0) * 100);
-  const incrementalRupees = data.projected_uplift.incremental_recovered_rupees || 0;
+  const d = data as any;
+  const baseline = d.baseline_policy || d.baseline || {};
+  const optimized = d.nivaran_optimized_policy || d.recoverai_optimized || {};
+  const uplift = d.projected_uplift || d.incremental_comparison || {};
+
+  const baselineRate = Math.round(((baseline.recovery_rate ?? baseline.projected_recovery_rate) || 0) * 100);
+  const optimizedRate = Math.round(((optimized.recovery_rate ?? optimized.projected_recovery_rate) || 0) * 100);
+  const upliftRate = Math.round(((uplift.incremental_recovery_rate ?? uplift.incremental_recovery_rate_diff) || 0) * 100);
+  const incrementalRupees = uplift.incremental_recovered_rupees || 0;
+  const percentageImprovement = uplift.percentage_improvement || 0;
 
   return (
     <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-6 my-6 relative overflow-hidden">
@@ -38,7 +44,7 @@ export const PolicyCompareCard: React.FC<PolicyCompareCardProps> = ({ data }) =>
             BASELINE POLICY (GENERIC RETRY)
           </div>
           <div className="font-serif-title text-3xl text-slate-300">
-            ₹{data.baseline_policy.projected_recovered_rupees.toLocaleString('en-IN')}
+            ₹{(baseline?.projected_recovered_rupees ?? 0).toLocaleString('en-IN')}
           </div>
           <div className="flex items-center justify-between text-xs font-mono text-slate-400 pt-2 border-t border-slate-800/80">
             <span>Projected Recovery Rate:</span>
@@ -55,7 +61,7 @@ export const PolicyCompareCard: React.FC<PolicyCompareCardProps> = ({ data }) =>
             <CheckCircle className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="font-serif-title text-3xl text-emerald-300 font-bold">
-            ₹{data.nivaran_optimized_policy.projected_recovered_rupees.toLocaleString('en-IN')}
+            ₹{(optimized?.projected_recovered_rupees ?? 0).toLocaleString('en-IN')}
           </div>
           <div className="flex items-center justify-between text-xs font-mono text-emerald-400 pt-2 border-t border-emerald-800/40">
             <span>Optimized Recovery Rate:</span>
@@ -74,7 +80,7 @@ export const PolicyCompareCard: React.FC<PolicyCompareCardProps> = ({ data }) =>
               +₹{incrementalRupees.toLocaleString('en-IN')}
             </div>
             <p className="text-xs text-indigo-300/80 mt-1 font-mono">
-              +{upliftRate}% Absolute Rate Uplift (+{data.projected_uplift.percentage_improvement.toFixed(1)}% Improvement)
+              +{upliftRate}% Absolute Rate Uplift (+{percentageImprovement.toFixed(1)}% Improvement)
             </p>
           </div>
           <div className="text-[11px] font-mono text-slate-400 bg-slate-950/60 p-2 rounded border border-slate-800">
