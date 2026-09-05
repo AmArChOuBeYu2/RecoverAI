@@ -1,6 +1,5 @@
-@import "tailwindcss";
-
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
 
 :root {
   --font-serif: 'Instrument Serif', Georgia, serif;
@@ -59,11 +58,5 @@ body {
 }
 
 .animate-pulse-glow {
-  animation: pulseGlow 3s ease-in-out infinite;
-}
-
-.glass-card {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: pulseGlow 3s infinite ease-in-out;
 }

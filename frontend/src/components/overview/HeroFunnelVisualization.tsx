@@ -33,7 +33,7 @@ export const HeroFunnelVisualization: React.FC<HeroFunnelProps> = ({ summary }) 
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-emerald-950/80 border border-emerald-500/30 text-emerald-300">
-            {recoveryRate.toFixed(1)}% REVENUE RECOVERY RATE
+            {((recoveryRate || 0) * 100).toFixed(1)}% REVENUE RECOVERY RATE
           </span>
         </div>
       </div>

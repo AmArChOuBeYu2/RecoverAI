@@ -87,29 +87,29 @@ export const OverviewPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 title="REVENUE AT RISK"
-                value={`₹${summary.revenue_at_risk_rupees.toLocaleString('en-IN')}`}
-                subtitle={`${summary.total_cases} total failed transaction records`}
+                value={`₹${(summary.revenue_at_risk_rupees ?? 0).toLocaleString('en-IN')}`}
+                subtitle={`${summary.total_cases ?? 0} total failed transaction records`}
                 accent="rose"
                 icon={DollarSign}
               />
               <MetricCard
                 title="VERIFIED RECOVERED"
-                value={`₹${summary.total_verified_recovered_rupees.toLocaleString('en-IN')}`}
-                subtitle={`${summary.verified_recovered_cases} verified recovered payments`}
+                value={`₹${(summary.total_verified_recovered_rupees ?? 0).toLocaleString('en-IN')}`}
+                subtitle={`${summary.verified_recovered_cases ?? 0} verified recovered payments`}
                 accent="emerald"
                 icon={ShieldCheck}
               />
               <MetricCard
                 title="REVENUE RECOVERY RATE"
-                value={`${summary.revenue_recovery_rate.toFixed(1)}%`}
-                subtitle={`Case recovery rate: ${summary.case_recovery_rate.toFixed(1)}%`}
+                value={`${((summary.revenue_recovery_rate ?? 0) * 100).toFixed(1)}%`}
+                subtitle={`Case recovery rate: ${((summary.case_recovery_rate ?? 0) * 100).toFixed(1)}%`}
                 accent="teal"
                 icon={Percent}
               />
               <MetricCard
                 title="ELIGIBLE CASES GATED"
-                value={summary.eligible_cases}
-                subtitle={`${summary.ineligible_cases} cases blocked by policy rules`}
+                value={summary.eligible_cases ?? 0}
+                subtitle={`${summary.ineligible_cases ?? 0} cases blocked by policy rules`}
                 accent="indigo"
                 icon={Layers}
               />
@@ -137,13 +137,13 @@ export const OverviewPage: React.FC = () => {
                         <div className="flex items-center justify-between text-xs font-mono">
                           <span className="text-slate-300 font-medium">{cat.category}</span>
                           <span className="text-slate-400">
-                            ₹{cat.amount_rupees.toLocaleString('en-IN')} ({cat.percentage.toFixed(1)}%)
+                            ₹{(cat.amount_rupees ?? 0).toLocaleString('en-IN')} ({(cat.percentage ?? 0).toFixed(1)}%)
                           </span>
                         </div>
                         <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
                           <div
                             className="bg-rose-500 h-full rounded-full transition-all"
-                            style={{ width: `${cat.percentage}%` }}
+                            style={{ width: `${cat.percentage ?? 0}%` }}
                           ></div>
                         </div>
                       </div>
@@ -170,11 +170,11 @@ export const OverviewPage: React.FC = () => {
                         <div key={st.strategy_type} className="p-3 rounded-lg bg-slate-950 border border-slate-800/80 flex items-center justify-between text-xs font-mono">
                           <div>
                             <span className="font-bold text-slate-100 block">{st.strategy_type}</span>
-                            <span className="text-[11px] text-slate-400">{st.attempt_count} Attempts · {st.success_count} Recoveries</span>
+                            <span className="text-[11px] text-slate-400">{st.attempt_count ?? 0} Attempts · {st.success_count ?? 0} Recoveries</span>
                           </div>
                           <div className="text-right">
                             <span className="text-emerald-400 font-bold text-sm block">{ratePct}%</span>
-                            <span className="text-[10px] text-indigo-300">₹{st.total_recovered_rupees.toLocaleString('en-IN')}</span>
+                            <span className="text-[10px] text-indigo-300">₹{(st.total_recovered_rupees ?? 0).toLocaleString('en-IN')}</span>
                           </div>
                         </div>
                       );
