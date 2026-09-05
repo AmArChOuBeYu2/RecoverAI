@@ -43,39 +43,47 @@ export const StrategiesPage: React.FC = () => {
 
         {loading ? (
           <LoadingState message="Computing strategy performance metrics & empirical evidence..." />
-        ) : data ? (
-          <>
-            {/* Header Summary Banner */}
-            <div className="p-6 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between shadow-xl">
-              <div>
-                <span className="text-xs font-mono text-emerald-400">PORTFOLIO STRATEGY ALLOCATION SUMMARY</span>
-                <div className="font-serif-title text-3xl font-normal text-slate-100 mt-1">
-                  ₹{data.total_recovered_rupees.toLocaleString('en-IN')} Total Recovered
+        ) : data ? (() => {
+          const metrics = data.portfolio_metrics;
+          const totalRecoveredRupees = data.total_recovered_rupees ?? metrics?.total_recovered_rupees ?? ((data.total_recovered_paise ?? metrics?.total_recovered_paise ?? 0) / 100);
+          const totalAttempts = data.total_attempts ?? metrics?.total_attempts ?? 0;
+          const totalSuccesses = data.total_successes ?? metrics?.total_successes ?? 0;
+          const evidenceCategory = data.evidence_category || 'SIMULATED';
+
+          return (
+            <>
+              {/* Header Summary Banner */}
+              <div className="p-6 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between shadow-xl">
+                <div>
+                  <span className="text-xs font-mono text-emerald-400">PORTFOLIO STRATEGY ALLOCATION SUMMARY</span>
+                  <div className="font-serif-title text-3xl font-normal text-slate-100 mt-1">
+                    ₹{totalRecoveredRupees.toLocaleString('en-IN')} Total Recovered
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Across {totalAttempts} attempts & {totalSuccesses} strategy recoveries
+                  </p>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  Across {data.total_attempts} attempts & {data.total_successes} verified strategy recoveries
-                </p>
+
+                <ProvenanceBadge category={evidenceCategory} size="lg" />
               </div>
 
-              <ProvenanceBadge category={data.evidence_category} size="lg" />
-            </div>
+              {/* Recharts Bar Visualization */}
+              <StrategyAllocationChart strategies={data.strategies || []} />
 
-            {/* Recharts Bar Visualization */}
-            <StrategyAllocationChart strategies={data.strategies} />
+              {/* Strategy Comparison Matrix Table */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-slate-100 font-mono flex items-center gap-2">
+                    <Award className="w-4 h-4 text-emerald-400" />
+                    CANDIDATE STRATEGY ALLOCATION MATRIX
+                  </h4>
+                </div>
 
-            {/* Strategy Comparison Matrix Table */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-semibold text-slate-100 font-mono flex items-center gap-2">
-                  <Award className="w-4 h-4 text-emerald-400" />
-                  CANDIDATE STRATEGY ALLOCATION MATRIX
-                </h4>
+                <StrategyComparisonTable strategies={data.strategies || []} />
               </div>
-
-              <StrategyComparisonTable strategies={data.strategies} />
-            </div>
-          </>
-        ) : null}
+            </>
+          );
+        })() : null}
       </div>
     </div>
   );

@@ -23,8 +23,8 @@ export const StrategyComparisonTable: React.FC<StrategyComparisonTableProps> = (
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/60 font-mono text-slate-200">
-          {strategies.map((st) => {
-            const ratePct = Math.round((st.weighted_recovery_rate || 0) * 100);
+          {(strategies || []).map((st) => {
+            const ratePct = Math.round(((st.recovery_rate ?? st.weighted_recovery_rate) || 0) * 100);
             const wilsonPct = Math.round((st.wilson_lower_bound || 0) * 100);
 
             return (

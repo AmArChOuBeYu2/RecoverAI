@@ -251,12 +251,21 @@ export interface StrategySummaryItem {
 }
 
 export interface StrategyPerformanceSummaryResponse {
-  metric_scope: string;
-  evidence_category: string;
-  total_attempts: number;
-  total_successes: number;
-  total_recovered_paise: number;
-  total_recovered_rupees: number;
+  metric_scope?: string;
+  evidence_category?: string;
+  segment_count?: number;
+  total_attempts?: number;
+  total_successes?: number;
+  total_recovered_paise?: number;
+  total_recovered_rupees?: number;
+  portfolio_metrics?: {
+    total_attempts: number;
+    total_successes: number;
+    total_recovered_paise: number;
+    total_recovered_rupees: number;
+    portfolio_recovery_rate: number;
+    portfolio_avg_recovered_paise_per_attempt: number;
+  };
   strategies: StrategySummaryItem[];
 }
 

@@ -149,17 +149,29 @@ class StrategyOptimizer:
         portfolio_recovery_rate = (total_portfolio_successes / total_portfolio_attempts) if total_portfolio_attempts > 0 else 0.0
         portfolio_avg_recovered_paise = (total_portfolio_recovered_paise / total_portfolio_attempts) if total_portfolio_attempts > 0 else 0.0
 
+        total_portfolio_recovered_rupees = round(total_portfolio_recovered_paise / 100.0, 2)
+        active_evidence_cats = {s["evidence_category"] for s in strategy_stats.values() if s["attempt_count"] > 0}
+        top_evidence_cat = (
+            DataCategory.VERIFIED.value if DataCategory.VERIFIED.value in active_evidence_cats
+            else (DataCategory.SIMULATED.value if DataCategory.SIMULATED.value in active_evidence_cats else DataCategory.SIMULATED.value)
+        )
+
         return {
             "filters": {
                 "failure_category": failure_category.upper() if failure_category else None,
                 "payment_method": payment_method.lower() if payment_method else None,
             },
             "segment_count": len(segments),
+            "evidence_category": top_evidence_cat,
+            "total_attempts": total_portfolio_attempts,
+            "total_successes": total_portfolio_successes,
+            "total_recovered_paise": total_portfolio_recovered_paise,
+            "total_recovered_rupees": total_portfolio_recovered_rupees,
             "portfolio_metrics": {
                 "total_attempts": total_portfolio_attempts,
                 "total_successes": total_portfolio_successes,
                 "total_recovered_paise": total_portfolio_recovered_paise,
-                "total_recovered_rupees": round(total_portfolio_recovered_paise / 100.0, 2),
+                "total_recovered_rupees": total_portfolio_recovered_rupees,
                 "portfolio_recovery_rate": round(portfolio_recovery_rate, 4),
                 "portfolio_avg_recovered_paise_per_attempt": round(portfolio_avg_recovered_paise, 2),
             },

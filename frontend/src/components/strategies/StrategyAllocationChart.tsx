@@ -7,11 +7,11 @@ interface StrategyAllocationChartProps {
 }
 
 export const StrategyAllocationChart: React.FC<StrategyAllocationChartProps> = ({ strategies }) => {
-  const chartData = strategies.map((st) => ({
+  const chartData = (strategies || []).map((st) => ({
     name: st.strategy_type,
-    rate: Math.round((st.weighted_recovery_rate || 0) * 100),
+    rate: Math.round(((st.recovery_rate ?? st.weighted_recovery_rate) || 0) * 100),
     wilson: Math.round((st.wilson_lower_bound || 0) * 100),
-    recoveredRupees: st.total_recovered_rupees,
+    recoveredRupees: st.total_recovered_rupees ?? ((st.total_recovered_paise ?? 0) / 100),
     attempts: st.attempt_count,
   }));
 
