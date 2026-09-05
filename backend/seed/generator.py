@@ -284,6 +284,22 @@ def _seed_database(
             db.add(seg)
     db.commit()
 
+    # Seed Transactions
+    for t_data in transactions:
+        if not db.query(Transaction).filter_by(id=t_data["id"]).first():
+            txn = Transaction(
+                id=t_data["id"],
+                customer_id=t_data["customer_id"],
+                amount_paise=t_data["amount_paise"],
+                currency=t_data.get("currency", "INR"),
+                status=t_data["status"],
+                payment_method=t_data["payment_method"],
+                failure_category=t_data["failure_category"],
+                error_description=t_data.get("failure_reason"),
+            )
+            db.add(txn)
+    db.commit()
+
     # Seed Baseline Strategy Performance Metrics per Segment
     all_segments = db.query(Segment).all()
     for seg in all_segments:

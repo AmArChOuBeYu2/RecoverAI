@@ -122,7 +122,7 @@ export const RecoveryPage: React.FC = () => {
           <CaseTable cases={filteredCases} onSelectCase={(id) => setSelectedCaseId(id)} />
         )}
 
-        {/* Case Inspector Modal */}
+        {/* Case Detail Modal / Deep Link */}
         {selectedCaseId && (
           <CaseDetailModal
             caseId={selectedCaseId}

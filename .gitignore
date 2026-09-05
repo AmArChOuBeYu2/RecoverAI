@@ -25,6 +25,7 @@ htmlcov/
 
 # Database & Storage
 *.db
+*.db-journal
 *.sqlite
 *.sqlite3
 

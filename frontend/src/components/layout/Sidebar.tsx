@@ -16,7 +16,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate }) => {
   const navItems = [
-    { id: '/overview', label: 'Overview', icon: LayoutDashboard },
+    { id: '/home', label: 'Overview', icon: LayoutDashboard },
     { id: '/recovery', label: 'Recovery', icon: RotateCcw },
     { id: '/segments', label: 'Segments', icon: Layers },
     { id: '/strategies', label: 'Strategies', icon: TrendingUp },
@@ -48,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate }) => 
         <nav className="p-4 space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentPath === item.id || (item.id !== '/overview' && currentPath.startsWith(item.id));
+            const isActive = currentPath === item.id || (currentPath === '/overview' && item.id === '/home') || (item.id !== '/home' && currentPath.startsWith(item.id));
             return (
               <button
                 key={item.id}
@@ -67,14 +67,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate }) => 
         </nav>
       </div>
 
-      {/* Footer Tagline */}
-      <div className="p-4 m-4 rounded-lg bg-slate-950/60 border border-slate-800/80 text-center">
-        <p className="text-xs font-serif-title italic text-slate-300">
-          "Revenue recovery, resolved intelligently."
-        </p>
-        <p className="text-[10px] font-mono text-slate-500 mt-1">
-          Razorpay Buildathon · Track 03
-        </p>
+      {/* Public Landing Link & Footer Tagline */}
+      <div className="p-4 space-y-3">
+        <button
+          onClick={() => onNavigate('/')}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-xs font-mono transition-all"
+        >
+          <span>← PUBLIC LANDING</span>
+        </button>
+
+        <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 text-center">
+          <p className="text-xs font-serif italic text-slate-300">
+            "Revenue recovery, resolved intelligently."
+          </p>
+          <p className="text-[10px] font-mono text-slate-500 mt-1">
+            Razorpay Buildathon · Track 03
+          </p>
+        </div>
       </div>
     </aside>
   );
