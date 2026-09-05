@@ -35,6 +35,6 @@ def test_fastapi_app_health():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
-    assert data["service"] == "RecoverAI"
+    assert data["service"] == "NIVARAN"
     assert "OBSERVED" in data["evidence_categories"]
     assert "VERIFIED" in data["evidence_categories"]

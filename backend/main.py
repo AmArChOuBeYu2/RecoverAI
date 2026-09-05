@@ -18,8 +18,8 @@ from backend.api.routes.batch import router as batch_router
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="RecoverAI",
-    description="AI-Powered Revenue Recovery Optimization & Execution System",
+    title="NIVARAN",
+    description="Revenue recovery, resolved intelligently.",
     version="0.1.0",
 )
 

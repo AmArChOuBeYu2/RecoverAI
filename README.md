@@ -1,6 +1,6 @@
-# RecoverAI — AI Revenue Recovery Agent
+# NIVARAN — Revenue recovery, resolved intelligently.
 
-RecoverAI is an AI-powered revenue recovery optimization and execution system built for the Razorpay AI Buildathon (Track 03 — AI Revenue Recovery).
+NIVARAN is an AI-powered revenue recovery optimization and execution system built for the Razorpay AI Buildathon (Track 03 — AI Revenue Recovery).
 
 ## Architecture & Principles
 - **Core Question**: *"Which recovery intervention is most likely to recover this revenue, for this type of customer/payment, under these constraints, and what evidence do we have that this strategy actually works?"*

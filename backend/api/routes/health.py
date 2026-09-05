@@ -40,7 +40,7 @@ def health_check(db: Session = Depends(get_db)):
 
     return {
         "status": "healthy" if db_status == "healthy" else "degraded",
-        "service": "RecoverAI",
+        "service": "NIVARAN",
         "version": "0.1.0",
         "components": {
             "database": db_status,
