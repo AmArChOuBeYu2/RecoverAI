@@ -28,6 +28,18 @@ from backend.services.policy_engine import PolicyEngine
 
 logger = logging.getLogger(__name__)
 
+# Baseline naive unsegmented retry conversion rates by Failure Category
+BASELINE_CONVERSION_RATES: Dict[str, float] = {
+    FailureCategory.AUTHENTICATION_FAILURE.value: 0.05,
+    FailureCategory.BANK_TIMEOUT.value: 0.25,
+    FailureCategory.NETWORK_FAILURE.value: 0.25,
+    FailureCategory.INSUFFICIENT_FUNDS.value: 0.02,
+    FailureCategory.CHECKOUT_ABANDONMENT.value: 0.00,
+    FailureCategory.REPEATED_FAILURE.value: 0.00,
+    FailureCategory.BUSINESS_ERROR.value: 0.00,
+    FailureCategory.UNKNOWN.value: 0.05,
+}
+
 # Strategy conversion multipliers relative to failure category baseline
 STRATEGY_CONVERSION_MULTIPLIERS: Dict[str, float] = {
     StrategyType.PAYMENT_LINK.value: 1.15,
@@ -124,9 +136,8 @@ class PolicySimulator:
                 actions_projected += 1
                 contacts_projected += 1
 
-                # Baseline conversion rate = unweighted baseline category rate * 0.85 (due to lack of targeting)
-                base_rate = VerificationService.get_simulated_conversion_probability(t.failure_category)
-                effective_rate = min(0.95, base_rate * 0.85)
+                # Baseline conversion rate = naive unsegmented retry conversion rate for failure category
+                effective_rate = BASELINE_CONVERSION_RATES.get(t.failure_category, 0.05)
 
                 expected_paise = int(round(t.amount_paise * effective_rate))
                 projected_recovered_paise += expected_paise

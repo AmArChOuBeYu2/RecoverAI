@@ -351,6 +351,26 @@ class MetricsService:
                 "unrecovered_count": unrecovered_count,
             }
 
+        total_unrecovered_paise = sum(b["total_value_paise"] for b in breakdown_by_category.values())
+        categories_list = []
+        for cat_name, data in breakdown_by_category.items():
+            if data["total_transactions"] > 0:
+                pct = (data["total_value_paise"] / total_unrecovered_paise * 100.0) if total_unrecovered_paise > 0 else 0.0
+                categories_list.append({
+                    "category": cat_name,
+                    "count": data["total_transactions"],
+                    "amount_paise": data["total_value_paise"],
+                    "amount_rupees": data["total_value_rupees"],
+                    "percentage": round(pct, 2),
+                })
+        
+        # Sort categories by amount_paise descending
+        categories_list.sort(key=lambda x: x["amount_paise"], reverse=True)
+
         return {
+            "total_unrecovered_cases": sum(b["total_transactions"] for b in breakdown_by_category.values()),
+            "total_unrecovered_paise": total_unrecovered_paise,
+            "total_unrecovered_rupees": round(total_unrecovered_paise / 100.0, 2),
+            "categories": categories_list,
             "breakdown_by_failure_category": breakdown_by_category,
         }
